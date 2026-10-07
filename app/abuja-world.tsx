@@ -13,8 +13,8 @@ function Player({onPositionChange,move,playerRef}:{onPositionChange?:Props["onPo
     if(!ref.current)return;
     playerRef.current=ref.current;
     const speed=4.2;
-    const x=(keys.ArrowRight||keys.d?1:0)-(keys.ArrowLeft||keys.a?1:0);
-    const z=(keys.ArrowDown||keys.s?1:0)-(keys.ArrowUp||keys.w?1:0);
+    const x=move?.x ?? 0;
+    const z=move?.z ?? 0;
     const v=new THREE.Vector2(x,z);
     if(v.length()>0){v.normalize(); ref.current.position.x+=v.x*speed*delta; ref.current.position.z+=v.y*speed*delta; ref.current.rotation.y=Math.atan2(v.x,v.y); onPositionChange?.(ref.current.position.x,ref.current.position.z);}
   });
