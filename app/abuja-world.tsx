@@ -8,6 +8,7 @@ type Props = { onPositionChange?: (x:number,z:number)=>void; move?: {x:number;z:
 
 function Player({onPositionChange,move,playerRef}:{onPositionChange?:Props["onPositionChange"];move?:{x:number;z:number};playerRef:React.RefObject<THREE.Group|null>}) {
   const ref=useRef<THREE.Group>(null);
+  const previous=useRef(new THREE.Vector3());
   
   useFrame((_,delta)=>{
     if(!ref.current)return;
@@ -16,7 +17,7 @@ function Player({onPositionChange,move,playerRef}:{onPositionChange?:Props["onPo
     const x=move?.x ?? 0;
     const z=move?.z ?? 0;
     const v=new THREE.Vector2(x,z);
-    if(v.length()>0){v.normalize(); ref.current.position.x+=v.x*speed*delta; ref.current.position.z+=v.y*speed*delta; ref.current.rotation.y=Math.atan2(v.x,v.y); onPositionChange?.(ref.current.position.x,ref.current.position.z);}
+    if(v.length()>0){v.normalize(); const next=ref.current.position.clone(); next.x+=v.x*speed*delta; next.z+=v.y*speed*delta; const blocked=next.x < -15.5 || next.x > 15.5 || next.z < -37 || next.z > 37 || (next.x > -4.5 && next.x < 4.5 && Math.abs(next.z) > 3.8); if(!blocked){ref.current.position.copy(next); ref.current.rotation.y=Math.atan2(v.x,v.y); onPositionChange?.(ref.current.position.x,ref.current.position.z);}}
   });
   return <group ref={ref} position={[0,.7,6]}
     onPointerDown={()=>{}}
