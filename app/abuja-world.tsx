@@ -1,15 +1,14 @@
 "use client";
 
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { useRef } from "react";
+import { useRef, type RefObject } from "react";
 import * as THREE from "three";
 
 type Props = { onPositionChange?: (x:number,z:number)=>void; move?: {x:number;z:number} };
 
-function Player({onPositionChange,move,playerRef}:{onPositionChange?:Props["onPositionChange"];move?:{x:number;z:number};playerRef:React.RefObject<THREE.Group|null>}) {
+function Player({onPositionChange,move,playerRef}:{onPositionChange?:Props["onPositionChange"];move?:{x:number;z:number};playerRef:RefObject<THREE.Group|null>}) {
   const ref=useRef<THREE.Group>(null);
-  const previous=useRef(new THREE.Vector3());
-  
+
   useFrame((_,delta)=>{
     if(!ref.current)return;
     playerRef.current=ref.current;
@@ -20,8 +19,6 @@ function Player({onPositionChange,move,playerRef}:{onPositionChange?:Props["onPo
     if(v.length()>0){v.normalize(); const next=ref.current.position.clone(); next.x+=v.x*speed*delta; next.z+=v.y*speed*delta; const blocked=next.x < -15.5 || next.x > 15.5 || next.z < -37 || next.z > 37 || (next.x > -4.5 && next.x < 4.5 && Math.abs(next.z) > 3.8); if(!blocked){ref.current.position.copy(next); ref.current.rotation.y=Math.atan2(v.x,v.y); onPositionChange?.(ref.current.position.x,ref.current.position.z);}}
   });
   return <group ref={ref} position={[0,.7,6]}
-    onPointerDown={()=>{}}
-    onCreated={()=>{}}
   >
     <mesh castShadow position={[0,.55,0]}><capsuleGeometry args={[.34,.75,6,12]}/><meshStandardMaterial color="#8b5a3c"/></mesh>
     <mesh castShadow position={[0,1.22,0]}><sphereGeometry args={[.34,16,16]}/><meshStandardMaterial color="#5b3525"/></mesh>
