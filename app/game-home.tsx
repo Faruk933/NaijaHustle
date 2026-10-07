@@ -41,7 +41,9 @@ export default function GameHome(){
    setProfile(p);setState(s);
    const {data:j}=await supabase.from("game_jobs").select("id,name,category,energy_cost,minutes_cost,min_pay_kobo,max_pay_kobo,required_reputation").eq("location_id",s.location_id).eq("is_active",true).order("name");
    setJobs(j??[]);setLoading(false);
- }}load();},[]);
+ }
+ load();
+ },[]);
 
  function applyJobResult(result:Record<string,unknown>){
   setState(c=>c?({...c,cash_kobo:Number(result.cash_kobo),energy:Number(result.energy),hunger:Number(result.hunger),game_day:Number(result.game_day),minutes_today:Number(result.minutes_today)}):c);
@@ -62,7 +64,7 @@ export default function GameHome(){
      <span>⚡ {state.energy}</span><span>🍲 {state.hunger}</span><span>❤ {state.health}</span><span>🕒 {formatTime(state.minutes_today)}</span>
    </div>
    <div className="touch-controls">
-     <div className="joystick" onPointerMove={e=>{if(e.buttons){const r=e.currentTarget.getBoundingClientRect(),x=(e.clientX-(r.left+r.width/2))/(r.width/2),z=(e.clientY-(r.top+r.height/2))/(r.height/2);const l=Math.hypot(x,z)||1;setMove({x:Math.max(-1,Math.min(1,x/l*Math.min(1,l))),z:Math.max(-1,Math.min(1,z/l*Math.min(1,l)))})}}} onPointerDown={e=>e.currentTarget.setPointerCapture(e.pointerId)} onPointerUp={()=>setMove({x:0,z:0})} onPointerCancel={()=>setMove({x:0,z:0})}><div className="joystick-knob"/></div>
+     <div className="joystick" onPointerMove={e=>{if(e.buttons){const r=e.currentTarget.getBoundingClientRect(),x=(e.clientX-(r.left+r.width/2))/(r.width/2),z=(e.clientY-(r.top+r.height/2))/(r.height/2);const l=Math.hypot(x,z)||1;setMove({x:Math.max(-1,Math.min(1,x/l*Math.min(1,l))),z:Math.max(-1,Math.min(1,z/l*Math.min(1)))})}}} onPointerDown={e=>e.currentTarget.setPointerCapture(e.pointerId)} onPointerUp={()=>setMove({x:0,z:0})} onPointerCancel={()=>setMove({x:0,z:0})}><div className="joystick-knob"/></div>
      <div className="action-buttons"><button onClick={()=>setShowWork(true)}>💼<small>WORK</small></button><button onClick={()=>setMessage("Explore the world by walking around.")}>👋<small>ACT</small></button></div>
    </div>
    {showWork&&<div className="modal"><div className="modal-card"><button className="close-button" onClick={()=>setShowWork(false)}>×</button><span className="muted">AVAILABLE HERE</span><h2>Jobs nearby</h2><WorkPanel jobs={jobs} state={state} onComplete={applyJobResult} formatNaira={formatNaira}/></div></div>}
