@@ -5,9 +5,9 @@ import { OrbitControls } from "@react-three/drei";
 import { useRef, useState } from "react";
 import * as THREE from "three";
 
-type Props = { onPositionChange?: (x:number,z:number)=>void };
+type Props = { onPositionChange?: (x:number,z:number)=>void; move?: {x:number;z:number} };
 
-function Player({onPositionChange}:{onPositionChange?:Props["onPositionChange"]}) {
+function Player({onPositionChange,move}:{onPositionChange?:Props["onPositionChange"];move?:{x:number;z:number}}) {
   const ref=useRef<THREE.Group>(null);
   const [keys,setKeys]=useState<Record<string,boolean>>({});
   useFrame((_,delta)=>{
@@ -38,7 +38,7 @@ function Building({position,size,label}:{position:[number,number,number],size:[n
  </group>
 }
 
-function WorldScene({onPositionChange}:{onPositionChange?:Props["onPositionChange"]}){
+function WorldScene({onPositionChange,move}:{onPositionChange?:Props["onPositionChange"];move?:{x:number;z:number}}){
  return <>
   <ambientLight intensity={1.4}/>
   <directionalLight position={[8,14,6]} intensity={2} castShadow/>
@@ -51,11 +51,11 @@ function WorldScene({onPositionChange}:{onPositionChange?:Props["onPositionChang
   <Building position={[-9,2.2,9]} size={[6,4.4,6]} label="Shop"/>
   <Building position={[9,3,10]} size={[7,6,5]} label="Apartment"/>
   <Building position={[-13,1.7,-1]} size={[4,3.4,5]} label="Kiosk"/>
-  <Player onPositionChange={onPositionChange}/>
+  <Player onPositionChange={onPositionChange} move={move}/>
   <OrbitControls enablePan={false} enableZoom={false} minPolarAngle={1.05} maxPolarAngle={1.05} target={[0,0,2]} />
  </>;
 }
 
-export default function AbujaWorld({onPositionChange}:Props){
- return <div className="world-canvas"><Canvas shadows camera={{position:[0,9,13],fov:55}}><WorldScene onPositionChange={onPositionChange}/></Canvas></div>;
+export default function AbujaWorld({onPositionChange,move}:Props){
+ return <div className="world-canvas"><Canvas shadows camera={{position:[0,9,13],fov:55}}><WorldScene onPositionChange={onPositionChange} move={move}/></Canvas></div>;
 }
