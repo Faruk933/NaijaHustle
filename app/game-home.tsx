@@ -1,6 +1,6 @@
 "use client";
 import dynamic from "next/dynamic";
-import {useEffect,useState} from "react";
+import {useEffect,useState,type PointerEvent} from "react";
 import {supabase} from "../lib/supabase";
 import WorkPanel from "./work-panel";
 const AbujaWorld=dynamic(()=>import("./abuja-world"),{ssr:false});
@@ -13,7 +13,7 @@ function formatTime(n:number){const h=Math.floor(n/60),m=n%60;return(h%12||12)+"
 export default function GameHome(){
  const[profile,setProfile]=useState<PlayerProfile|null>(null),[state,setState]=useState<PlayerState|null>(null),[jobs,setJobs]=useState<GameJob[]>([]);
  const[loading,setLoading]=useState(true),[showWork,setShowWork]=useState(false),[message,setMessage]=useState(""),[move,setMove]=useState({x:0,z:0}),[nearby,setNearby]=useState<string|null>(null),[cameraInput,setCameraInput]=useState({x:0,y:0}),[cameraTouch,setCameraTouch]=useState<{x:number;y:number}|null>(null),[cameraActive,setCameraActive]=useState(false),[joystickPos,setJoystickPos]=useState({x:0,y:0});
- const joystickMove=(e:React.PointerEvent<HTMLDivElement>)=>{const r=e.currentTarget.getBoundingClientRect(),dx=e.clientX-(r.left+r.width/2),dy=e.clientY-(r.top+r.height/2),mx=r.width*.38,my=r.height*.38,len=Math.hypot(dx/mx,dy/my)||1,s=Math.min(1,1/len),x=(dx/mx)*s,y=(dy/my)*s;setJoystickPos({x:x*mx,y:y*my});setMove({x,y:z:y})};
+ const joystickMove=(e:PointerEvent<HTMLDivElement>)=>{const r=e.currentTarget.getBoundingClientRect(),dx=e.clientX-(r.left+r.width/2),dy=e.clientY-(r.top+r.height/2),mx=r.width*.38,my=r.height*.38,len=Math.hypot(dx/mx,dy/my)||1,s=Math.min(1,1/len),x=(dx/mx)*s,y=(dy/my)*s;setJoystickPos({x:x*mx,y:y*my});setMove({x,y:z:y})};
  const resetJoystick=()=>{setJoystickPos({x:0,y:0});setMove({x:0,z:0})};
  useEffect(()=>{async function load(){let{data:{session}}=await supabase.auth.getSession();if(!session){const{error}=await supabase.auth.signInAnonymously();if(error){setMessage("Enable Anonymous Sign-Ins in Supabase Auth.");setLoading(false);return}({data:{session}}=await supabase.auth.getSession())}const user=session?.user;if(!user){setMessage("Could not create a game session.");setLoading(false);return}const[{data:p},{data:s,error:se}]=await Promise.all([supabase.from("player_profiles").select("display_name,avatar_key").eq("user_id",user.id).single(),supabase.from("player_state").select("*").eq("user_id",user.id).single()]);if(se||!s){setMessage("Could not load your game state.");setLoading(false);return}setProfile(p);setState(s);const{data:j}=await supabase.from("game_jobs").select("id,name,category,energy_cost,minutes_cost,min_pay_kobo,max_pay_kobo,required_reputation").eq("location_id",s.location_id).eq("is_active",true).order("name");setJobs(j??[]);setLoading(false)}load()},[]);
  function applyJobResult(r:Record<string,unknown>){setState(c=>c?({...c,cash_kobo:Number(r.cash_kobo),energy:Number(r.energy),hunger:Number(r.hunger),game_day:Number(r.game_day),minutes_today:Number(r.minutes_today)}):c);setMessage("Completed "+String(r.job_name)+" • earned "+formatNaira(Number(r.pay_kobo)));setShowWork(false)}
