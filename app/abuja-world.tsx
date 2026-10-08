@@ -34,8 +34,28 @@ const places=[
 ] as const;
 
 type Collider={x:number;z:number,w:number,d:number};
-const colliders:Collider[]=places.filter(([name])=>name!=="Eagle Square").map(([,x,z,w,,d])=>({x,z,w,d}));
+const colliders:Collider[]=[...places.filter(([name])=>name!=="Eagle Square").map(([,x,z,w,,d])=>({x,z,w,d})),...urbanColliders];
 const PLAYER_RADIUS=.65;
+type UrbanBuilding={x:number;z:number;w:number;d:number;h:number};
+const districtCenters=[
+  {x:G(9.055,7.49)[0],z:G(9.055,7.49)[1],rows:6,cols:7},
+  {x:G(9.076,7.476)[0],z:G(9.076,7.476)[1],rows:6,cols:8},
+  {x:G(9.032,7.483)[0],z:G(9.032,7.483)[1],rows:7,cols:7}
+] as const;
+
+const urbanBuildings:UrbanBuilding[]=[];
+for(const dc of districtCenters){
+  for(let r=0;r<dc.rows;r++) for(let col=0;col<dc.cols;col++){
+    const x=dc.x+(col-(dc.cols-1)/2)*260;
+    const z=dc.z+(r-(dc.rows-1)/2)*260;
+    const w=72+((r*17+col*29)%48);
+    const d=62+((r*23+col*11)%44);
+    const h=10+((r*31+col*13)%55);
+    urbanBuildings.push({x,z,w,d,h});
+  }
+}
+const urbanColliders:Collider[]=urbanBuildings.map(b=>({x:b.x,z:b.z,w:b.w,d:b.d}));
+
 
 function blocked(x:number,z:number){
  for(const c of colliders){
@@ -158,7 +178,26 @@ const districtBounds=[
  {name:"WUSE",x:G(9.076,7.476)[0],z:G(9.076,7.476)[1],w:4200,d:3600},
  {name:"GARKI",x:G(9.032,7.483)[0],z:G(9.032,7.483)[1],w:3600,d:4000}
 ] as const;
-function RoadNetwork(){return <group>
+function CityStreets(){return <group>
+ {districtCenters.flatMap((dc,di)=>Array.from({length:dc.rows+1},(_,i)=>
+   <mesh key={"h"+di+"-"+i} position={[dc.x,.055,dc.z+(i-dc.rows/2)*260]} receiveShadow>
+     <boxGeometry args={[dc.cols*260, .06, 22]}/><meshStandardMaterial color="#30332f"/>
+   </mesh>
+ ))}
+ {districtCenters.flatMap((dc,di)=>Array.from({length:dc.cols+1},(_,i)=>
+   <mesh key={"v"+di+"-"+i} position={[dc.x+(i-dc.cols/2)*260,.055,dc.z]} receiveShadow>
+     <boxGeometry args={[22,.06,dc.rows*260]}/><meshStandardMaterial color="#30332f"/>
+   </mesh>
+ ))}
+ </group>}
+
+function UrbanBuildings(){return <group>
+ {urbanBuildings.map((b,i)=><group key={i} position={[b.x,b.h/2,b.z]}>
+   <mesh castShadow receiveShadow><boxGeometry args={[b.w,b.h,b.d]}/><meshStandardMaterial color={i%5===0?"#8f897d":i%3===0?"#a79c8c":"#958d80"}/></mesh>
+   <mesh position={[0,.2,b.d/2+.04]}><boxGeometry args={[Math.min(18,b.w*.3),Math.min(10,b.h*.18),.08]}/><meshStandardMaterial color="#4b91b5"/></mesh>
+ </group>)}
+ </group>}
+\nfunction RoadNetwork(){return <group>
  {roads.map((r,i)=><mesh key={i} position={[r.x,.025,r.z]} receiveShadow><boxGeometry args={[r.w,.05,r.d]}/><meshStandardMaterial color="#252825"/></mesh>)}
  
  
@@ -237,7 +276,7 @@ function Scene({move,cameraYaw=0,cameraPitch=.48,jump=0,onPositionChange,onNearb
    <ambientLight intensity={1.15}/>
    <directionalLight position={[8,14,6]} intensity={2.6} castShadow/>
    <mesh rotation={[-Math.PI/2,0,0]} receiveShadow><planeGeometry args={[12000,12000]}/><meshStandardMaterial color="#68705f"/></mesh>
-   <RoadNetwork/>
+   <RoadNetwork/>\n   <CityStreets/>\n   <UrbanBuildings/>
    {districtBounds.map(b=><DistrictBoundary key={b.name} {...b}/>)}\n   <DistrictSign name="CENTRAL AREA" position={[...G(9.055,7.49),.1]}/>
    <DistrictSign name="WUSE" position={[...G(9.081,7.476),.1]}/>
    <DistrictSign name="GARKI" position={[...G(9.029,7.483),.1]}/>
