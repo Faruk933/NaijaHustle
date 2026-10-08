@@ -154,9 +154,9 @@ const roads=[
  {x:2500,z:-1200,w:18,d:4200}
 ] as const;
 const districtBounds=[
- {name:"CENTRAL AREA",...G(9.055,7.49),w:3200,d:3000},
- {name:"WUSE",...G(9.076,7.476),w:4200,d:3600},
- {name:"GARKI",...G(9.032,7.483),w:3600,d:4000}
+ {name:"CENTRAL AREA",x:G(9.055,7.49)[0],z:G(9.055,7.49)[1],w:3200,d:3000},
+ {name:"WUSE",x:G(9.076,7.476)[0],z:G(9.076,7.476)[1],w:4200,d:3600},
+ {name:"GARKI",x:G(9.032,7.483)[0],z:G(9.032,7.483)[1],w:3600,d:4000}
 ] as const;
 function RoadNetwork(){return <group>
  {roads.map((r,i)=><mesh key={i} position={[r.x,.025,r.z]} receiveShadow><boxGeometry args={[r.w,.05,r.d]}/><meshStandardMaterial color="#252825"/></mesh>)}
