@@ -12,11 +12,30 @@ type GameJob={id:string;name:string;category:string;energy_cost:number;minutes_c
 const locationNames:Record<string,string>={"central-area":"Central Area, Abuja",wuse:"Wuse, Abuja",garki:"Garki, Abuja",jabi:"Jabi, Abuja"};
 function formatNaira(k:number){return new Intl.NumberFormat("en-NG",{style:"currency",currency:"NGN",maximumFractionDigits:0}).format(k/100)}
 function formatTime(n:number){const h=Math.floor(n/60),m=n%60;return(h%12||12)+":"+m.toString().padStart(2,"0")+" "+(h>=12?"PM":"AM")}
+const MINI_POINTS=[
+ {name:"Central Area",x:0,z:0},{name:"Wuse",x:2340,z:-2340},{name:"Garki",x:-770,z:2560},
+ {name:"Jabi",x:-2230,z:-1560},{name:"National Mosque",x:-190,z:-580},{name:"National Christian Centre",x:540,z:367},
+ {name:"Wuse Market",x:-2200,z:-1510},{name:"Abuja ICC",x:-2930,z:1890}
+];
+function MiniMap({x,z,yaw}:{x:number;z:number;yaw:number}){
+ const scale=.055,size=190;
+ const tx=-x*scale+size/2,ty=-z*scale+size/2,rot=yaw*180/Math.PI;
+ return <div className="minimap" aria-label="Minimap">
+   <div className="minimap-title">ABUJA <span>MAP</span></div>
+   <div className="minimap-world" style={{transform:"translate("+tx+"px,"+ty+"px)"}}>
+     <div className="minimap-road minimap-road-h" style={{top:92}}/><div className="minimap-road minimap-road-v" style={{left:92}}/>
+     <div className="minimap-road minimap-road-h" style={{top:65}}/><div className="minimap-road minimap-road-v" style={{left:65}}/>
+     {MINI_POINTS.map(p=><div key={p.name} className="minimap-point" style={{left:p.x*scale+size/2,top:p.z*scale+size/2}} title={p.name}/>)}
+   </div>
+   <div className="minimap-player" style={{transform:"translate(-50%,-50%) rotate("+rot+"deg)"}}><span/></div>
+   <div className="minimap-label">● PLAYER</div>
+ </div>;
+}
 
 export default function GameHome(){
  const[profile,setProfile]=useState<PlayerProfile|null>(null),[state,setState]=useState<PlayerState|null>(null),[jobs,setJobs]=useState<GameJob[]>([]);
  const[loading,setLoading]=useState(true),[showWork,setShowWork]=useState(false),[message,setMessage]=useState("");
- const[move,setMove]=useState({x:0,z:0}),[nearby,setNearby]=useState<string|null>(null);
+ const[move,setMove]=useState({x:0,z:0}),[nearby,setNearby]=useState<string|null>(null),[playerPos,setPlayerPos]=useState({x:0,z:0});
  const[cameraYaw,setCameraYaw]=useState(0),[cameraPitch,setCameraPitch]=useState(.48),[jump,setJump]=useState(0);
  const[joystickPos,setJoystickPos]=useState({x:0,y:0}),[lookActive,setLookActive]=useState(false);
  const lookStart=useRef({x:0,y:0}),keys=useRef({x:0,z:0}),keyTimer=useRef<number|null>(null);
@@ -108,7 +127,7 @@ export default function GameHome(){
  if(!state||!profile)return <main className="game-screen"><p>{message}</p></main>;
 
  return <main className="game-screen">
-   <AbujaWorld move={move} cameraYaw={cameraYaw} cameraPitch={cameraPitch} jump={jump} onNearbyChange={setNearby}/>
+   <AbujaWorld move={move} cameraYaw={cameraYaw} cameraPitch={cameraPitch} jump={jump} onNearbyChange={setNearby} onPositionChange={(x,z)=>setPlayerPos({x,z})}/>\n   <MiniMap x={playerPos.x} z={playerPos.z} yaw={cameraYaw}/>
    <header className="hud">
      <div><b>NAIJA HUSTLE</b><span>DAY {state.game_day} • {locationNames[state.location_id]??state.location_id}</span></div>
      <div className="hud-money">{formatNaira(state.cash_kobo)}</div>
