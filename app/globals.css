@@ -290,3 +290,5 @@ button, a { font: inherit; }
  .joystick{width:140px;height:140px}
  .action-buttons button{width:76px;height:76px}
 }
+
+.jump-button{width:78px!important;height:78px!important;border:2px solid #ffffff66!important;border-radius:50%!important;background:#18231ddd!important;box-shadow:0 6px 20px #0008;display:flex;flex-direction:column;align-items:center;justify-content:center;touch-action:none;user-select:none}.jump-button small{font-size:9px!important;letter-spacing:.08em}
