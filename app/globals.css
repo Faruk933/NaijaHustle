@@ -256,3 +256,5 @@ button, a { font: inherit; }
 .camera-pad{position:absolute;right:24px;bottom:32px;width:92px;height:92px;border:1px solid #ffffff33;border-radius:50%;background:#101510aa;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;touch-action:none;user-select:none;z-index:5}
 .camera-pad span{font-size:25px;line-height:1}.camera-pad small{font-size:8px;font-weight:800;opacity:.7;margin-top:3px}
 @media (max-width:520px){.camera-pad{right:18px;bottom:26px;width:82px;height:82px}.action-buttons{right:112px!important}}
+
+.joystick{position:relative;overflow:visible;touch-action:none;-webkit-user-select:none;user-select:none}.joystick:after{content:"";position:absolute;inset:8px;border:1px solid #ffffff22;border-radius:50%;pointer-events:none}.joystick-knob{position:absolute;left:50%;top:50%;transform-origin:center;width:52px;height:52px;pointer-events:none}.camera-pad:active{background:#253328ee;transform:scale(.96)}
