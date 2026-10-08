@@ -14,6 +14,7 @@ type Props={
 };
 
 const WORLD_ORIGIN={lat:9.055,lon:7.49};
+const WORLD_SCALE=.38;
 const METERS_PER_LAT=111320;
 const METERS_PER_LON=111320*Math.cos(WORLD_ORIGIN.lat*Math.PI/180);
 function G(lat:number,lon:number){return [
@@ -44,8 +45,8 @@ const districtCenters=[
 const urbanBuildings:UrbanBuilding[]=[];
 for(const dc of districtCenters){
   for(let r=0;r<dc.rows;r++) for(let col=0;col<dc.cols;col++){
-    const x=dc.x+(col-(dc.cols-1)/2)*260;
-    const z=dc.z+(r-(dc.rows-1)/2)*260;
+    const x=dc.x+(col-(dc.cols-1)/2)*100;
+    const z=dc.z+(r-(dc.rows-1)/2)*100;
     const w=72+((r*17+col*29)%48);
     const d=62+((r*23+col*11)%44);
     const h=10+((r*31+col*13)%55);
@@ -67,8 +68,8 @@ function blocked(x:number,z:number){
 }
 
 function tryMove(pos:THREE.Vector3,dx:number,dz:number){
- const nx=THREE.MathUtils.clamp(pos.x+dx,-6000,6000);
- const nz=THREE.MathUtils.clamp(pos.z+dz,-6000,6000);
+ const nx=THREE.MathUtils.clamp(pos.x+dx,-2300,2300);
+ const nz=THREE.MathUtils.clamp(pos.z+dz,-2300,2300);
  let x=pos.x,z=pos.z;
  if(!blocked(nx,pos.z))x=nx;
  if(!blocked(x,nz))z=nz;
@@ -90,7 +91,7 @@ function Player({move,cameraYaw,jump,playerRef,onPositionChange,groundRef}:{move
    if(jump!==lastJump.current){lastJump.current=jump;if(grounded.current){vertical.current=6.4;grounded.current=false;}}
    const v=velocity.current,forward=new THREE.Vector2(-Math.sin(cameraYaw),-Math.cos(cameraYaw)),right=new THREE.Vector2(Math.cos(cameraYaw),-Math.sin(cameraYaw));
    const worldMove=right.multiplyScalar(v.x).add(forward.multiplyScalar(-v.y));
-   const speed=5.2,distance=worldMove.length()*speed*d,steps=Math.max(1,Math.ceil(distance/.24));
+   const speed=5.2,distance=worldMove.length()*speed*d,steps=Math.max(1,Math.ceil(distance/.20));
    let moved=false;
    for(let i=0;i<steps;i++){
      const stepScale=1/steps,sx=worldMove.x*speed*d*stepScale,sz=worldMove.y*speed*d*stepScale,next=tryMove(p.position,sx,sz);
@@ -155,12 +156,12 @@ function Player({move,cameraYaw,jump,playerRef,onPositionChange,groundRef}:{move
 }
 type Road={x:number;z:number;w:number;d:number};
 const roads:Road[]=[
- {x:0,z:0,w:34,d:12000},{x:0,z:0,w:12000,d:34},
- {x:-900,z:0,w:24,d:5200},{x:900,z:0,w:24,d:5200},
- {x:0,z:-850,w:24,d:4200},{x:0,z:850,w:24,d:4200},
- {x:-1850,z:900,w:24,d:4200},{x:1850,z:-900,w:24,d:4200},
- {x:-2500,z:1200,w:22,d:4200},{x:2500,z:-1200,w:22,d:4200},
- {x:-1200,z:900,w:22,d:5000},{x:1200,z:-500,w:22,d:5000}
+ {x:0,z:0,w:26,d:4600},{x:0,z:0,w:4600,d:26},
+ {x:-340,z:0,w:18,d:2000},{x:340,z:0,w:18,d:2000},
+ {x:0,z:-320,w:18,d:1700},{x:0,z:320,w:18,d:1700},
+ {x:-700,z:340,w:18,d:1600},{x:700,z:-340,w:18,d:1600},
+ {x:-950,z:460,w:16,d:1500},{x:950,z:-460,w:16,d:1500},
+ {x:-460,z:340,w:16,d:1800},{x:460,z:-190,w:16,d:1800}
 ] as const;
 const intersections=[
  {x:0,z:0,r:42},{x:-900,z:0,r:34},{x:900,z:0,r:34},
@@ -173,10 +174,10 @@ const districtBounds=[
 ] as const;
 function CityStreets(){return <group>
  {districtCenters.flatMap((dc,di)=>Array.from({length:dc.rows+1},(_,i)=>
-   <mesh key={"h"+di+"-"+i} position={[dc.x,.055,dc.z+(i-dc.rows/2)*260]} receiveShadow><boxGeometry args={[dc.cols*260,.06,22]}/><meshStandardMaterial color="#30332f"/></mesh>
+   <mesh key={"h"+di+"-"+i} position={[dc.x,.055,dc.z+(i-dc.rows/2)*100]} receiveShadow><boxGeometry args={[dc.cols*100,.06,22]}/><meshStandardMaterial color="#30332f"/></mesh>
  ))}
  {districtCenters.flatMap((dc,di)=>Array.from({length:dc.cols+1},(_,i)=>
-   <mesh key={"v"+di+"-"+i} position={[dc.x+(i-dc.cols/2)*260,.055,dc.z]} receiveShadow><boxGeometry args={[22,.06,dc.rows*260]}/><meshStandardMaterial color="#30332f"/></mesh>
+   <mesh key={"v"+di+"-"+i} position={[dc.x+(i-dc.cols/2)*100,.055,dc.z]} receiveShadow><boxGeometry args={[22,.06,dc.rows*100]}/><meshStandardMaterial color="#30332f"/></mesh>
  ))}
  </group>}
 function UrbanBuildings(){return <group>
