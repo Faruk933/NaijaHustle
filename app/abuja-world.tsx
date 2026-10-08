@@ -12,16 +12,25 @@ type Props={
  jump?:number;
 };
 
+const WORLD_ORIGIN={lat:9.055,lon:7.49};
+const METERS_PER_LAT=111320;
+const METERS_PER_LON=111320*Math.cos(WORLD_ORIGIN.lat*Math.PI/180);
+function G(lat:number,lon:number){return [
+ (lon-WORLD_ORIGIN.lon)*METERS_PER_LON,
+ (WORLD_ORIGIN.lat-lat)*METERS_PER_LAT
+] as const;}
+
+// Real-world Abuja anchor points. Coordinates are map references; building footprints are game-scaled.
 const places=[
- ["CBD Office",-12,-8,7,6,6],["Wuse Shop",29,-9,6,5,6],
- ["Garki Shop",-30,17,6,4.4,6],["Jabi Apartment",30,16,7,6,5],
- ["STREET KIOSK",-4,-1,3,3,2.4],
- ["CBD Tower",10,-2,5,9,5],["Wuse Plaza",38,-19,7,5,5],
- ["Garki Market",-40,16,7,4.5,6],["Garki Office",-30,30,6,7,6],
- ["National Mosque",-4,-20,7,5,7],["National Christian Centre",9,-20,7,6,7],
- ["Eagle Square",2,-31,10,1,8],["Wuse Market",38,-7,9,5,8],
- ["Abuja ICC",-18,17,8,6,7],["Garki Post Office",-43,25,5,4,5],
- ["Radio House",-30,40,5,12,5],["Abuja City Gate",-46,7,5,5,4]
+ ["CBD Office",...G(9.055,7.495),70,24,70],["Wuse Shop",...G(9.076,7.476),60,20,55],
+ ["Garki Shop",...G(9.032,7.483),60,18,55],["Jabi Apartment",...G(9.069,7.429),70,22,60],
+ ["STREET KIOSK",...G(9.052,7.487),28,8,22],
+ ["CBD Tower",...G(9.052,7.501),50,70,50],["Wuse Plaza",...G(9.071,7.474),75,20,60],
+ ["Garki Market",...G(9.022,7.492),85,18,70],["Garki Office",...G(9.035,7.482),60,25,55],
+ ["National Mosque",...G(9.0602,7.4898),90,45,90],["National Christian Centre",...G(9.0517,7.4945),80,55,70],
+ ["Eagle Square",...G(9.055,7.490),180,4,110],["Wuse Market",...G(9.06862,7.46601),110,22,90],
+ ["Abuja ICC",...G(9.038,7.482),95,25,80],["Garki Post Office",...G(9.031,7.485),55,16,45],
+ ["Radio House",...G(9.058,7.482),55,45,55],["Abuja City Gate",...G(9.016,7.449),60,28,45]
 ] as const;
 
 type Collider={x:number;z:number,w:number,d:number};
@@ -39,8 +48,8 @@ function blocked(x:number,z:number){
 }
 
 function tryMove(pos:THREE.Vector3,dx:number,dz:number){
- const nx=THREE.MathUtils.clamp(pos.x+dx,-58,58);
- const nz=THREE.MathUtils.clamp(pos.z+dz,-58,58);
+ const nx=THREE.MathUtils.clamp(pos.x+dx,-6000,6000);
+ const nz=THREE.MathUtils.clamp(pos.z+dz,-6000,6000);
  let x=pos.x,z=pos.z;
  if(!blocked(nx,pos.z))x=nx;
  if(!blocked(x,nz))z=nz;
@@ -50,7 +59,7 @@ function tryMove(pos:THREE.Vector3,dx:number,dz:number){
 function Player({move,cameraYaw,jump,playerRef,onPositionChange}:{move?:Props["move"];cameraYaw:number;jump:number;playerRef:RefObject<THREE.Group|null>;onPositionChange?:Props["onPositionChange"]}){
  const g=useRef<THREE.Group>(null),la=useRef<THREE.Group>(null),ra=useRef<THREE.Group>(null),ll=useRef<THREE.Group>(null),rl=useRef<THREE.Group>(null);
  const torso=useRef<THREE.Group>(null),velocity=useRef(new THREE.Vector2()),vertical=useRef(0),grounded=useRef(true),lastJump=useRef(0),walk=useRef(0),ray=useRef(new THREE.Raycaster());
- const lastPosition=useRef(new THREE.Vector3(0,.45,6));
+ const lastPosition=useRef(new THREE.Vector3(...G(9.055,7.49),.45));
 
  useFrame((_,delta)=>{
    const p=g.current;if(!p)return;
@@ -72,7 +81,7 @@ function Player({move,cameraYaw,jump,playerRef,onPositionChange}:{move?:Props["m
    const forward=new THREE.Vector2(-Math.sin(cameraYaw),-Math.cos(cameraYaw));
    const right=new THREE.Vector2(Math.cos(cameraYaw),-Math.sin(cameraYaw));
    const worldMove=right.multiplyScalar(v.x).add(forward.multiplyScalar(-v.y));
-   const speed=7.5;
+   const speed=5.2;
    const distance=worldMove.length()*speed*d;
    const steps=Math.max(1,Math.ceil(distance/.32));
    let moved=false;
@@ -124,7 +133,7 @@ function Player({move,cameraYaw,jump,playerRef,onPositionChange}:{move?:Props["m
    }
    lastPosition.current.copy(p.position);
  });
- return <group ref={g} position={[0,.45,6]}>
+ return <group ref={g} position={[...G(9.055,7.49),.45]}>
    <mesh castShadow position={[0,1.72,0]}><sphereGeometry args={[.34,20,16]}/><meshStandardMaterial color="#7b4b32"/></mesh>
    <mesh castShadow position={[0,1.95,0]}><sphereGeometry args={[.36,20,16]}/><meshStandardMaterial color="#17130f"/></mesh>
    <group ref={torso} position={[0,1.08,0]}>
@@ -137,19 +146,22 @@ function Player({move,cameraYaw,jump,playerRef,onPositionChange}:{move?:Props["m
  </group>
 }
 const roads=[
- {x:0,z:0,w:9,d:116},{x:0,z:0,w:116,d:9},
- {x:31,z:0,w:7,d:116},{x:-32,z:0,w:7,d:116},
- {x:0,z:-17,w:116,d:7},{x:0,z:17,w:116,d:7}
+ {x:0,z:0,w:24,d:12000},
+ {x:0,z:0,w:12000,d:24},
+ {x:-1200,z:900,w:18,d:5000},
+ {x:1200,z:-500,w:18,d:5000},
+ {x:-2500,z:1200,w:18,d:4200},
+ {x:2500,z:-1200,w:18,d:4200}
 ] as const;
 const districtBounds=[
- {name:"CENTRAL AREA",x:1,z:-15,w:30,d:30},
- {name:"WUSE",x:32,z:-10,w:26,d:28},
- {name:"GARKI",x:-31,z:22,w:28,d:30}
+ {name:"CENTRAL AREA",...G(9.055,7.49),w:3200,d:3000},
+ {name:"WUSE",...G(9.076,7.476),w:4200,d:3600},
+ {name:"GARKI",...G(9.032,7.483),w:3600,d:4000}
 ] as const;
 function RoadNetwork(){return <group>
  {roads.map((r,i)=><mesh key={i} position={[r.x,.025,r.z]} receiveShadow><boxGeometry args={[r.w,.05,r.d]}/><meshStandardMaterial color="#252825"/></mesh>)}
- {[-30,-20,-10,10,20,30].map(z=><mesh key={"v"+z} position={[0,.09,z]}><boxGeometry args={[.12,.02,3.2]}/><meshStandardMaterial color="#e7e1bd"/></mesh>)}
- {[-30,-20,-10,10,20,30].map(x=><mesh key={"h"+x} position={[x,.09,0]}><boxGeometry args={[3.2,.02,.12]}/><meshStandardMaterial color="#e7e1bd"/></mesh>)}
+ 
+ 
  <mesh position={[0,.085,0]}><cylinderGeometry args={[6,6,.03,48]}/><meshStandardMaterial color="#3b3d36"/></mesh>
  <mesh position={[0,.1,0]}><cylinderGeometry args={[3.2,3.2,.04,48]}/><meshStandardMaterial color="#68705f"/></mesh>
  </group>}
@@ -224,11 +236,11 @@ function Scene({move,cameraYaw=0,cameraPitch=.48,jump=0,onPositionChange,onNearb
  return <>
    <ambientLight intensity={1.15}/>
    <directionalLight position={[8,14,6]} intensity={2.6} castShadow/>
-   <mesh rotation={[-Math.PI/2,0,0]} receiveShadow><planeGeometry args={[120,120]}/><meshStandardMaterial color="#68705f"/></mesh>
+   <mesh rotation={[-Math.PI/2,0,0]} receiveShadow><planeGeometry args={[12000,12000]}/><meshStandardMaterial color="#68705f"/></mesh>
    <RoadNetwork/>
-   {districtBounds.map(b=><DistrictBoundary key={b.name} {...b}/>)}\n   <DistrictSign name="CENTRAL AREA" position={[-10,.1,-1]}/>
-   <DistrictSign name="WUSE" position={[32,.1,-25]}/>
-   <DistrictSign name="GARKI" position={[-31,.1,39]}/>
+   {districtBounds.map(b=><DistrictBoundary key={b.name} {...b}/>)}\n   <DistrictSign name="CENTRAL AREA" position={[...G(9.055,7.49),.1]}/>
+   <DistrictSign name="WUSE" position={[...G(9.081,7.476),.1]}/>
+   <DistrictSign name="GARKI" position={[...G(9.029,7.483),.1]}/>
    {places.map(a=>a[0].includes("National")||a[0]==="Eagle Square"||a[0]==="Abuja City Gate"||a[0]==="Wuse Market"?<Landmark key={a[0]} a={a}/>:<Building key={a[0]} a={a}/>)}
    <Player move={move} cameraYaw={cameraYaw} jump={jump} onPositionChange={onPositionChange} playerRef={pr}/>
  </>
