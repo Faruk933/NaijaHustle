@@ -34,7 +34,7 @@ const places=[
 ] as const;
 
 type Collider={x:number;z:number,w:number,d:number};
-const colliders:Collider[]=places.map(([,x,z,w,,d])=>({x,z,w,d}));
+const colliders:Collider[]=places.filter(([name])=>name!=="Eagle Square").map(([,x,z,w,,d])=>({x,z,w,d}));
 const PLAYER_RADIUS=.65;
 
 function blocked(x:number,z:number){
