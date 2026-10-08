@@ -15,7 +15,9 @@ type Props={
 const places=[
  ["CBD Office",-8,-9,7,6,6],["Wuse Shop",8,-10,6,5,6],
  ["Garki Shop",-9,9,6,4.4,6],["Jabi Apartment",9,10,7,6,5],
- ["STREET KIOSK",-6.0,-6.0,3.0,3.0,2.4]
+ ["STREET KIOSK",-6.0,-6.0,3.0,3.0,2.4],
+ ["CBD Tower",12,-7,5,9,5],["Wuse Plaza",14,-15,7,5,5],
+ ["Garki Market",-15,13,7,4.5,6],["Garki Office",-12,20,6,7,6]
 ] as const;
 
 type Collider={x:number;z:number,w:number,d:number};
@@ -130,6 +132,23 @@ function Player({move,cameraYaw,jump,playerRef,onPositionChange}:{move?:Props["m
    <group ref={rl} position={[.19,.62,0]}><mesh castShadow position={[0,-.42,0]}><capsuleGeometry args={[.14,.62,6,10]}/><meshStandardMaterial color="#222b3a"/></mesh></group>
  </group>
 }
+const roads=[
+ {x:0,z:0,w:9,d:80},{x:0,z:0,w:80,d:9},{x:12,z:0,w:7,d:80},
+ {x:-13,z:0,w:7,d:80},{x:0,z:-15,w:80,d:7},{x:0,z:15,w:80,d:7}
+] as const;
+function RoadNetwork(){return <group>
+ {roads.map((r,i)=><mesh key={i} position={[r.x,.025,r.z]} receiveShadow><boxGeometry args={[r.w,.05,r.d]}/><meshStandardMaterial color="#252825"/></mesh>)}
+ {[-30,-20,-10,10,20,30].map(z=><mesh key={"v"+z} position={[0,.09,z]}><boxGeometry args={[.12,.02,3.2]}/><meshStandardMaterial color="#e7e1bd"/></mesh>)}
+ {[-30,-20,-10,10,20,30].map(x=><mesh key={"h"+x} position={[x,.09,0]}><boxGeometry args={[3.2,.02,.12]}/><meshStandardMaterial color="#e7e1bd"/></mesh>)}
+ <mesh position={[0,.085,0]}><cylinderGeometry args={[6,6,.03,48]}/><meshStandardMaterial color="#3b3d36"/></mesh>
+ <mesh position={[0,.1,0]}><cylinderGeometry args={[3.2,3.2,.04,48]}/><meshStandardMaterial color="#68705f"/></mesh>
+ </group>}
+function DistrictSign({name,position}:{name:string;position:[number,number,number]}){return <group position={position}>
+ <mesh position={[0,1.35,0]}><boxGeometry args={[2.8,.75,.12]}/><meshStandardMaterial color="#18231d"/></mesh>
+ <mesh position={[0,1.35,.07]}><boxGeometry args={[2.45,.42,.03]}/><meshStandardMaterial color="#d8f36b"/></mesh>
+ <mesh position={[-1.15,.55,0]}><cylinderGeometry args={[.06,.06,1.6,8]}/><meshStandardMaterial color="#55564e"/></mesh>
+ <mesh position={[1.15,.55,0]}><cylinderGeometry args={[.06,.06,1.6,8]}/><meshStandardMaterial color="#55564e"/></mesh>
+ </group>}
 function Building({a}:{a:typeof places[number]}){
  const[,x,z,w,h,d]=a;
  return <group position={[x,h/2,z]}>
@@ -165,8 +184,10 @@ function Scene({move,cameraYaw=0,cameraPitch=.48,jump=0,onPositionChange,onNearb
    <ambientLight intensity={1.15}/>
    <directionalLight position={[8,14,6]} intensity={2.6} castShadow/>
    <mesh rotation={[-Math.PI/2,0,0]} receiveShadow><planeGeometry args={[80,80]}/><meshStandardMaterial color="#68705f"/></mesh>
-   <mesh position={[0,.02,0]}><boxGeometry args={[8,.04,80]}/><meshStandardMaterial color="#252825"/></mesh>
-   <mesh position={[0,.03,0]}><boxGeometry args={[80,.04,8]}/><meshStandardMaterial color="#252825"/></mesh>
+   <RoadNetwork/>
+   <DistrictSign name="CENTRAL AREA" position={[-8,.1,3]}/>
+   <DistrictSign name="WUSE" position={[13,.1,-20]}/>
+   <DistrictSign name="GARKI" position={[-14,.1,20]}/>
    {places.map(a=><Building key={a[0]} a={a}/>)}
    <Player move={move} cameraYaw={cameraYaw} jump={jump} onPositionChange={onPositionChange} playerRef={pr}/>
  </>
