@@ -17,7 +17,7 @@ export default function GameHome(){
  const[profile,setProfile]=useState<PlayerProfile|null>(null),[state,setState]=useState<PlayerState|null>(null),[jobs,setJobs]=useState<GameJob[]>([]);
  const[loading,setLoading]=useState(true),[showWork,setShowWork]=useState(false),[message,setMessage]=useState("");
  const[move,setMove]=useState({x:0,z:0}),[nearby,setNearby]=useState<string|null>(null);
- const[cameraYaw,setCameraYaw]=useState(0),[cameraPitch,setCameraPitch]=useState(.48);
+ const[cameraYaw,setCameraYaw]=useState(0),[cameraPitch,setCameraPitch]=useState(.48),[jump,setJump]=useState(0);
  const[joystickPos,setJoystickPos]=useState({x:0,y:0}),[lookActive,setLookActive]=useState(false);
  const lookStart=useRef({x:0,y:0}),keys=useRef({x:0,z:0}),keyTimer=useRef<number|null>(null);
 
@@ -108,7 +108,7 @@ export default function GameHome(){
  if(!state||!profile)return <main className="game-screen"><p>{message}</p></main>;
 
  return <main className="game-screen">
-   <AbujaWorld move={move} cameraYaw={cameraYaw} cameraPitch={cameraPitch} onNearbyChange={setNearby}/>
+   <AbujaWorld move={move} cameraYaw={cameraYaw} cameraPitch={cameraPitch} jump={jump} onNearbyChange={setNearby}/>
    <header className="hud">
      <div><b>NAIJA HUSTLE</b><span>DAY {state.game_day} • {locationNames[state.location_id]??state.location_id}</span></div>
      <div className="hud-money">{formatNaira(state.cash_kobo)}</div>
@@ -132,7 +132,7 @@ export default function GameHome(){
      </div>
      <div className="action-buttons">
        <button onClick={interact}>💼<small>WORK</small></button>
-       <button onClick={()=>setMessage("Use MOVE to walk and drag the right side to look.")}>👋<small>ACT</small></button>
+       <button onClick={()=>setJump(v=>v+1)}>↟<small>JUMP</small></button>
      </div>
    </div>
 
