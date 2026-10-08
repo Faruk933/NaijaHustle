@@ -132,7 +132,9 @@ export default function GameHome(){
      </div>
      <div className="action-buttons">
        <button onClick={interact}>💼<small>WORK</small></button>
-       <button className="jump-button" aria-label="Jump" onClick={()=>setJump(v=>v+1)}>↑<small>JUMP</small></button>
+       <button className="jump-button" aria-label="Jump"
+         onPointerDown={e=>{e.preventDefault();e.stopPropagation();e.currentTarget.setPointerCapture(e.pointerId);setJump(v=>v+1)}}
+         onClick={e=>e.preventDefault()}>↑<small>JUMP</small></button>
      </div>
    </div>
 
