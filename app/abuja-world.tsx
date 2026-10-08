@@ -9,6 +9,7 @@ type Props={
  move?:{x:number;z:number};
  cameraYaw?:number;
  cameraPitch?:number;
+ jump?:number;
 };
 
 const places=[
@@ -17,16 +18,42 @@ const places=[
  ["Street Kiosk",-13,-1,4,3.4,5]
 ] as const;
 
-function Player({move,cameraYaw,playerRef,onPositionChange}:{move?:Props["move"];cameraYaw:number;playerRef:RefObject<THREE.Group|null>;onPositionChange?:Props["onPositionChange"]}){
+type Collider={x:number;z:number,w:number,d:number};
+const colliders:Collider[]=places.map(([,x,z,w,,d])=>({x,z,w,d}));
+const PLAYER_RADIUS=.48;
+
+function blocked(x:number,z:number){
+ for(const c of colliders){
+   const cx=Math.max(c.x-c.w/2,Math.min(x,c.x+c.w/2));
+   const cz=Math.max(c.z-c.d/2,Math.min(z,c.z+c.d/2));
+   const dx=x-cx,dz=z-cz;
+   if(dx*dx+dz*dz<PLAYER_RADIUS*PLAYER_RADIUS)return true;
+ }
+ return false;
+}
+
+function tryMove(pos:THREE.Vector3,dx:number,dz:number){
+ const nx=THREE.MathUtils.clamp(pos.x+dx,-38,38);
+ const nz=THREE.MathUtils.clamp(pos.z+dz,-38,38);
+ let x=pos.x,z=pos.z;
+ if(!blocked(nx,pos.z))x=nx;
+ if(!blocked(x,nz))z=nz;
+ return {x,z};
+}
+
+function Player({move,cameraYaw,jump,playerRef,onPositionChange}:{move?:Props["move"];cameraYaw:number;jump:number;playerRef:RefObject<THREE.Group|null>;onPositionChange?:Props["onPositionChange"]}){
  const g=useRef<THREE.Group>(null),la=useRef<THREE.Group>(null),ra=useRef<THREE.Group>(null),ll=useRef<THREE.Group>(null),rl=useRef<THREE.Group>(null);
- const walk=useRef(0),velocity=useRef(new THREE.Vector2());
+ const walk=useRef(0),velocity=useRef(new THREE.Vector2()),vertical=useRef(0),grounded=useRef(true),lastJump=useRef(0);
  useFrame((_,d)=>{
    const p=g.current;if(!p)return;
    playerRef.current=p;
    const target=new THREE.Vector2(move?.x??0,move?.z??0);
-   const accel=1-Math.pow(.00005,d);
-   velocity.current.lerp(target,accel);
+   velocity.current.lerp(target,1-Math.pow(.00005,d));
    const moving=velocity.current.lengthSq()>.004;
+   if(jump!==lastJump.current&&grounded.current){
+     lastJump.current=jump;vertical.current=6.2;grounded.current=false;
+   } else if(jump!==lastJump.current) lastJump.current=jump;
+
    if(moving){
      const v=velocity.current.clone().clampLength(0,1);
      const forward=new THREE.Vector2(-Math.sin(cameraYaw),-Math.cos(cameraYaw));
@@ -35,21 +62,26 @@ function Player({move,cameraYaw,playerRef,onPositionChange}:{move?:Props["move"]
      if(worldMove.lengthSq()>.001){
        worldMove.normalize();
        const speed=7.5;
-       const n=p.position.clone();
-       n.x=THREE.MathUtils.clamp(n.x+worldMove.x*speed*d,-36,36);
-       n.z=THREE.MathUtils.clamp(n.z+worldMove.y*speed*d,-36,36);
-       p.position.copy(n);
-       const targetRot=Math.atan2(worldMove.x,worldMove.y);
-       p.rotation.y=THREE.MathUtils.lerp(p.rotation.y,targetRot,1-Math.pow(.0001,d));
-       onPositionChange?.(n.x,n.z);
-       walk.current+=d*12;
+       const next=tryMove(p.position,worldMove.x*speed*d,worldMove.y*speed*d);
+       if(next.x!==p.position.x||next.z!==p.position.z){
+         p.position.x=next.x;p.position.z=next.z;
+         const targetRot=Math.atan2(worldMove.x,worldMove.y);
+         p.rotation.y=THREE.MathUtils.lerp(p.rotation.y,targetRot,1-Math.pow(.0001,d));
+         onPositionChange?.(next.x,next.z);
+         walk.current+=d*12;
+       }
      }
    }
+   vertical.current-=18*d;
+   p.position.y+=vertical.current*d;
+   if(p.position.y<=.45){p.position.y=.45;vertical.current=0;grounded.current=true}
    const swing=moving?Math.sin(walk.current)*.7:0;
-   if(la.current)la.current.rotation.x=swing;if(ra.current)ra.current.rotation.x=-swing;
-   if(ll.current)ll.current.rotation.x=-swing;if(rl.current)rl.current.rotation.x=swing;
+   if(la.current)la.current.rotation.x=swing;
+   if(ra.current)ra.current.rotation.x=-swing;
+   if(ll.current)ll.current.rotation.x=-swing;
+   if(rl.current)rl.current.rotation.x=swing;
  });
- return <group ref={g} position={[0,.05,6]}>
+ return <group ref={g} position={[0,.45,6]}>
    <mesh castShadow position={[0,1.72,0]}><sphereGeometry args={[.34,20,16]}/><meshStandardMaterial color="#7b4b32"/></mesh>
    <mesh castShadow position={[0,1.95,0]}><sphereGeometry args={[.36,20,16]}/><meshStandardMaterial color="#17130f"/></mesh>
    <mesh castShadow position={[0,1.08,0]}><boxGeometry args={[.68,.82,.4]}/><meshStandardMaterial color="#17834b"/></mesh>
@@ -69,24 +101,21 @@ function Building({a}:{a:typeof places[number]}){
  </group>
 }
 
-function Scene({move,cameraYaw=0,cameraPitch=.48,onPositionChange,onNearbyChange}:{move?:Props["move"];cameraYaw?:number;cameraPitch?:number;onPositionChange?:Props["onPositionChange"];onNearbyChange?:Props["onNearbyChange"]}){
- const pr=useRef<THREE.Group|null>(null),{camera}=useThree(),last=useRef<string|null>(null),lookTarget=useRef(new THREE.Vector3()),smoothPos=useRef(new THREE.Vector3());
+function Scene({move,cameraYaw=0,cameraPitch=.48,jump=0,onPositionChange,onNearbyChange}:{move?:Props["move"];cameraYaw?:number;cameraPitch?:number;jump?:number;onPositionChange?:Props["onPositionChange"];onNearbyChange?:Props["onNearbyChange"]}){
+ const pr=useRef<THREE.Group|null>(null),{camera}=useThree(),last=useRef<string|null>(null),lookTarget=useRef(new THREE.Vector3());
  useFrame((_,d)=>{
    const p=pr.current;if(!p)return;
    const dist=8.2;
    const off=new THREE.Vector3(Math.sin(cameraYaw)*dist,3.2+cameraPitch*3.8,Math.cos(cameraYaw)*dist);
-   const desired=p.position.clone().add(off);
-   const follow=1-Math.pow(.0008,d);
-   camera.position.lerp(desired,follow);
+   camera.position.lerp(p.position.clone().add(off),1-Math.pow(.0008,d));
    const forward=new THREE.Vector3(-Math.sin(cameraYaw),0,-Math.cos(cameraYaw));
    const target=p.position.clone().add(new THREE.Vector3(0,1.15,0)).add(forward.multiplyScalar(1.2));
    lookTarget.current.lerp(target,1-Math.pow(.0004,d));
    camera.lookAt(lookTarget.current);
-   smoothPos.current.lerp(p.position,1-Math.pow(.0002,d));
    let hit:string|null=null,best=99;
    for(const a of places){
-     const[name,x,z,w,,dd]=a,q=Math.hypot(p.position.x-x,p.position.z-z),r=Math.max(w,dd)*.75+2.2;
-     if(q<r&&q<best){hit=name;best=q}
+     const[name,x,z,w,,dd]=a,q=Math.hypot(p.position.x-x,p.position.z-z),rr=Math.max(w,dd)*.75+2.2;
+     if(q<rr&&q<best){hit=name;best=q}
    }
    if(hit!==last.current){last.current=hit;onNearbyChange?.(hit)}
  });
@@ -96,7 +125,8 @@ function Scene({move,cameraYaw=0,cameraPitch=.48,onPositionChange,onNearbyChange
    <mesh rotation={[-Math.PI/2,0,0]} receiveShadow><planeGeometry args={[80,80]}/><meshStandardMaterial color="#68705f"/></mesh>
    <mesh position={[0,.02,0]}><boxGeometry args={[8,.04,80]}/><meshStandardMaterial color="#252825"/></mesh>
    <mesh position={[0,.03,0]}><boxGeometry args={[80,.04,8]}/><meshStandardMaterial color="#252825"/></mesh>
-   {places.map(a=><Building key={a[0]} a={a}/>)}<Player move={move} cameraYaw={cameraYaw} onPositionChange={onPositionChange} playerRef={pr}/>
+   {places.map(a=><Building key={a[0]} a={a}/>)}
+   <Player move={move} cameraYaw={cameraYaw} jump={jump} onPositionChange={onPositionChange} playerRef={pr}/>
  </>
 }
 
