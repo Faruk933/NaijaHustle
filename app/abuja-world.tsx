@@ -13,15 +13,15 @@ type Props={
 };
 
 const places=[
- ["CBD Office",-8,-9,7,6,6],["Wuse Shop",8,-10,6,5,6],
- ["Garki Shop",-9,9,6,4.4,6],["Jabi Apartment",9,10,7,6,5],
- ["STREET KIOSK",-6.0,-6.0,3.0,3.0,2.4],
- ["CBD Tower",12,-7,5,9,5],["Wuse Plaza",14,-15,7,5,5],
- ["Garki Market",-15,13,7,4.5,6],["Garki Office",-12,20,6,7,6],
- ["National Mosque",-5,-12,7,5,7],["National Christian Centre",3,-12,7,6,7],
- ["Eagle Square",0,-20,10,1,8],["Wuse Market",15,-8,9,5,8],
- ["Abuja ICC",-15,8,8,6,7],["Garki Post Office",-21,14,5,4,5],
- ["Radio House",-20,22,5,12,5],["Abuja City Gate",-22,8,5,5,4]
+ ["CBD Office",-12,-8,7,6,6],["Wuse Shop",29,-9,6,5,6],
+ ["Garki Shop",-30,17,6,4.4,6],["Jabi Apartment",30,16,7,6,5],
+ ["STREET KIOSK",-4,-1,3,3,2.4],
+ ["CBD Tower",10,-2,5,9,5],["Wuse Plaza",38,-19,7,5,5],
+ ["Garki Market",-40,16,7,4.5,6],["Garki Office",-30,30,6,7,6],
+ ["National Mosque",-4,-20,7,5,7],["National Christian Centre",9,-20,7,6,7],
+ ["Eagle Square",2,-31,10,1,8],["Wuse Market",38,-7,9,5,8],
+ ["Abuja ICC",-18,17,8,6,7],["Garki Post Office",-43,25,5,4,5],
+ ["Radio House",-30,40,5,12,5],["Abuja City Gate",-46,7,5,5,4]
 ] as const;
 
 type Collider={x:number;z:number,w:number,d:number};
@@ -39,8 +39,8 @@ function blocked(x:number,z:number){
 }
 
 function tryMove(pos:THREE.Vector3,dx:number,dz:number){
- const nx=THREE.MathUtils.clamp(pos.x+dx,-38,38);
- const nz=THREE.MathUtils.clamp(pos.z+dz,-38,38);
+ const nx=THREE.MathUtils.clamp(pos.x+dx,-58,58);
+ const nz=THREE.MathUtils.clamp(pos.z+dz,-58,58);
  let x=pos.x,z=pos.z;
  if(!blocked(nx,pos.z))x=nx;
  if(!blocked(x,nz))z=nz;
@@ -137,13 +137,14 @@ function Player({move,cameraYaw,jump,playerRef,onPositionChange}:{move?:Props["m
  </group>
 }
 const roads=[
- {x:0,z:0,w:9,d:80},{x:0,z:0,w:80,d:9},{x:12,z:0,w:7,d:80},
- {x:-13,z:0,w:7,d:80},{x:0,z:-15,w:80,d:7},{x:0,z:15,w:80,d:7}
+ {x:0,z:0,w:9,d:116},{x:0,z:0,w:116,d:9},
+ {x:31,z:0,w:7,d:116},{x:-32,z:0,w:7,d:116},
+ {x:0,z:-17,w:116,d:7},{x:0,z:17,w:116,d:7}
 ] as const;
 const districtBounds=[
- {name:"CENTRAL AREA",x:-1,z:1,w:24,d:24},
- {name:"WUSE",x:12,z:-13,w:22,d:18},
- {name:"GARKI",x:-12,z:15,w:22,d:18}
+ {name:"CENTRAL AREA",x:1,z:-15,w:30,d:30},
+ {name:"WUSE",x:32,z:-10,w:26,d:28},
+ {name:"GARKI",x:-31,z:22,w:28,d:30}
 ] as const;
 function RoadNetwork(){return <group>
  {roads.map((r,i)=><mesh key={i} position={[r.x,.025,r.z]} receiveShadow><boxGeometry args={[r.w,.05,r.d]}/><meshStandardMaterial color="#252825"/></mesh>)}
@@ -223,11 +224,11 @@ function Scene({move,cameraYaw=0,cameraPitch=.48,jump=0,onPositionChange,onNearb
  return <>
    <ambientLight intensity={1.15}/>
    <directionalLight position={[8,14,6]} intensity={2.6} castShadow/>
-   <mesh rotation={[-Math.PI/2,0,0]} receiveShadow><planeGeometry args={[80,80]}/><meshStandardMaterial color="#68705f"/></mesh>
+   <mesh rotation={[-Math.PI/2,0,0]} receiveShadow><planeGeometry args={[120,120]}/><meshStandardMaterial color="#68705f"/></mesh>
    <RoadNetwork/>
-   {districtBounds.map(b=><DistrictBoundary key={b.name} {...b}/>)}\n   <DistrictSign name="CENTRAL AREA" position={[-8,.1,3]}/>
-   <DistrictSign name="WUSE" position={[13,.1,-20]}/>
-   <DistrictSign name="GARKI" position={[-14,.1,20]}/>
+   {districtBounds.map(b=><DistrictBoundary key={b.name} {...b}/>)}\n   <DistrictSign name="CENTRAL AREA" position={[-10,.1,-1]}/>
+   <DistrictSign name="WUSE" position={[32,.1,-25]}/>
+   <DistrictSign name="GARKI" position={[-31,.1,39]}/>
    {places.map(a=>a[0].includes("National")||a[0]==="Eagle Square"||a[0]==="Abuja City Gate"||a[0]==="Wuse Market"?<Landmark key={a[0]} a={a}/>:<Building key={a[0]} a={a}/>)}
    <Player move={move} cameraYaw={cameraYaw} jump={jump} onPositionChange={onPositionChange} playerRef={pr}/>
  </>
