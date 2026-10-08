@@ -132,13 +132,25 @@ function Player({move,cameraYaw,jump,playerRef,onPositionChange,groundRef}:{move
    wasMoving.current=moving;
  });
  return <group ref={g} position={[...G(9.055,7.49),.45]}>
-   <mesh castShadow position={[0,1.72,0]}><sphereGeometry args={[.34,20,16]}/><meshStandardMaterial color="#7b4b32"/></mesh>
-   <mesh castShadow position={[0,1.95,0]}><sphereGeometry args={[.36,20,16]}/><meshStandardMaterial color="#17130f"/></mesh>
-   <group ref={torso} position={[0,1.08,0]}><mesh castShadow><boxGeometry args={[.68,.82,.4]}/><meshStandardMaterial color="#17834b"/></mesh></group>
-   <group ref={la} position={[-.43,1.28,0]}><mesh castShadow position={[0,-.35,0]}><capsuleGeometry args={[.12,.48,6,10]}/><meshStandardMaterial color="#7b4b32"/></mesh></group>
-   <group ref={ra} position={[.43,1.28,0]}><mesh castShadow position={[0,-.35,0]}><capsuleGeometry args={[.12,.48,6,10]}/><meshStandardMaterial color="#7b4b32"/></mesh></group>
-   <group ref={ll} position={[-.19,.62,0]}><mesh castShadow position={[0,-.42,0]}><capsuleGeometry args={[.14,.62,6,10]}/><meshStandardMaterial color="#222b3a"/></mesh></group>
-   <group ref={rl} position={[.19,.62,0]}><mesh castShadow position={[0,-.42,0]}><capsuleGeometry args={[.14,.62,6,10]}/><meshStandardMaterial color="#222b3a"/></mesh></group>
+   <group ref={torso} position={[0,1.08,0]}>
+     <mesh castShadow><capsuleGeometry args={[.34,.52,6,12]}/><meshStandardMaterial color="#176b45" roughness={.8}/></mesh>
+     <mesh castShadow position={[0,.05,.22]}><boxGeometry args={[.5,.28,.035]}/><meshStandardMaterial color="#d8f36b" roughness={.7}/></mesh>
+     <mesh castShadow position={[0,-.35,0]}><boxGeometry args={[.74,.12,.44]}/><meshStandardMaterial color="#123d2d"/></mesh>
+   </group>
+   <group position={[0,1.72,0]}>
+     <mesh castShadow><sphereGeometry args={[.34,24,18]}/><meshStandardMaterial color="#7b4b32" roughness={.85}/></mesh>
+     <mesh castShadow position={[0,.18,-.02]} scale={[1.02,.58,1.02]}><sphereGeometry args={[.34,20,14]}/><meshStandardMaterial color="#17130f" roughness={.95}/></mesh>
+     <mesh castShadow position={[0,.29,.01]} rotation={[.15,0,0]}><sphereGeometry args={[.22,16,10]}/><meshStandardMaterial color="#17130f"/></mesh>
+     <mesh position={[-.12,.02,.315]}><sphereGeometry args={[.035,12,8]}/><meshStandardMaterial color="#17130f"/></mesh>
+     <mesh position={[.12,.02,.315]}><sphereGeometry args={[.035,12,8]}/><meshStandardMaterial color="#17130f"/></mesh>
+     <mesh position={[-.11,.03,.342]}><sphereGeometry args={[.018,10,8]}/><meshStandardMaterial color="#f5f5e8" emissive="#333333"/></mesh>
+     <mesh position={[.11,.03,.342]}><sphereGeometry args={[.018,10,8]}/><meshStandardMaterial color="#f5f5e8" emissive="#333333"/></mesh>
+     <mesh castShadow position={[0,-.17,.02]} rotation={[Math.PI/2,0,0]}><torusGeometry args={[.27,.055,8,20]}/><meshStandardMaterial color="#17130f"/></mesh>
+   </group>
+   <group ref={la} position={[-.43,1.32,0]}><mesh castShadow position={[0,-.36,0]}><capsuleGeometry args={[.12,.48,8,12]}/><meshStandardMaterial color="#7b4b32" roughness={.85}/></mesh><mesh castShadow position={[0,-.63,.02]}><sphereGeometry args={[.13,12,8]}/><meshStandardMaterial color="#7b4b32"/></mesh></group>
+   <group ref={ra} position={[.43,1.32,0]}><mesh castShadow position={[0,-.36,0]}><capsuleGeometry args={[.12,.48,8,12]}/><meshStandardMaterial color="#7b4b32" roughness={.85}/></mesh><mesh castShadow position={[0,-.63,.02]}><sphereGeometry args={[.13,12,8]}/><meshStandardMaterial color="#7b4b32"/></mesh></group>
+   <group ref={ll} position={[-.19,.61,0]}><mesh castShadow position={[0,-.43,0]}><capsuleGeometry args={[.145,.62,8,12]}/><meshStandardMaterial color="#202936" roughness={.85}/></mesh><mesh castShadow position={[0,-.78,.12]}><boxGeometry args={[.28,.16,.48]}/><meshStandardMaterial color="#111820" roughness={.9}/></mesh></group>
+   <group ref={rl} position={[.19,.61,0]}><mesh castShadow position={[0,-.43,0]}><capsuleGeometry args={[.145,.62,8,12]}/><meshStandardMaterial color="#202936" roughness={.85}/></mesh><mesh castShadow position={[0,-.78,.12]}><boxGeometry args={[.28,.16,.48]}/><meshStandardMaterial color="#111820" roughness={.9}/></mesh></group>
  </group>
 }
 const roads=[
