@@ -1,4 +1,5 @@
-"use client";
+`use client`;
+
 import {Canvas,useFrame,useThree} from "@react-three/fiber";
 import {useRef,type RefObject} from "react";
 import * as THREE from "three";
@@ -33,9 +34,7 @@ const places=[
  ["Radio House",...G(9.058,7.482),55,45,55],["Abuja City Gate",...G(9.016,7.449),60,28,45]
 ] as const;
 
-type Collider={x:number;z:number,w:number,d:number};
-const colliders:Collider[]=[...places.filter(([name])=>name!=="Eagle Square").map(([,x,z,w,,d])=>({x,z,w,d})),...urbanColliders];
-const PLAYER_RADIUS=.65;
+type Collider={x:number;z:number;w:number;d:number};
 type UrbanBuilding={x:number;z:number;w:number;d:number;h:number};
 const districtCenters=[
   {x:G(9.055,7.49)[0],z:G(9.055,7.49)[1],rows:6,cols:7},
@@ -55,7 +54,8 @@ for(const dc of districtCenters){
   }
 }
 const urbanColliders:Collider[]=urbanBuildings.map(b=>({x:b.x,z:b.z,w:b.w,d:b.d}));
-
+const colliders:Collider[]=[...places.filter(([name])=>name!=="Eagle Square").map(([,x,z,w,,d])=>({x,z,w,d})),...urbanColliders];
+const PLAYER_RADIUS=.65;
 
 function blocked(x:number,z:number){
  for(const c of colliders){
@@ -128,7 +128,6 @@ function Player({move,cameraYaw,jump,playerRef,onPositionChange}:{move?:Props["m
      onPositionChange?.(p.position.x,p.position.z);
    }
 
-   // Ground detection: raycast straight down against the world floor height.
    ray.current.set(new THREE.Vector3(p.position.x,p.position.y+1,p.position.z),new THREE.Vector3(0,-1,0));
    const groundDistance=p.position.y+1;
    const onGround=groundDistance<=1.02&&vertical.current<=0;
@@ -198,9 +197,7 @@ function UrbanBuildings(){return <group>
  </group>)}
  </group>}
 function RoadNetwork(){return <group>
- {roads.map((r,i)=><mesh key={i} position={[r.x,.025,r.z]} receiveShadow><boxGeometry args={[r.w,.05,r.d]}/><meshStandardMaterial color="#252825"/></mesh>)}
- 
- 
+ {roads.map((r,i)=><mesh key={i} position={[r.x,.025,r.z]} receiveShadow><boxGeometry args={[r.w,.05,r.d]}/><meshStandardMaterial color="#252825"/></mesh>}
  <mesh position={[0,.085,0]}><cylinderGeometry args={[6,6,.03,48]}/><meshStandardMaterial color="#3b3d36"/></mesh>
  <mesh position={[0,.1,0]}><cylinderGeometry args={[3.2,3.2,.04,48]}/><meshStandardMaterial color="#68705f"/></mesh>
  </group>}
@@ -211,8 +208,7 @@ function DistrictSign({name,position}:{name:string;position:[number,number,numbe
  <mesh position={[-1.15,.55,0]}><cylinderGeometry args={[.06,.06,1.6,8]}/><meshStandardMaterial color="#55564e"/></mesh>
  <mesh position={[1.15,.55,0]}><cylinderGeometry args={[.06,.06,1.6,8]}/><meshStandardMaterial color="#55564e"/></mesh>
  </group>}
-function Landmark({a}:{a:typeof places[number]}){
- const[name,x,z,w,h,d]=a;
+function Landmark({a}:{a:typeof places[number]}){const[name,x,z,w,h,d]=a;
  if(name==="National Mosque")return <group position={[x,0,z]}>
    <mesh castShadow position={[0,2.2,0]}><cylinderGeometry args={[3.5,4,.5,32]}/><meshStandardMaterial color="#d8d1bd"/></mesh>
    <mesh castShadow position={[0,4.1,0]}><sphereGeometry args={[1.5,24,16]}/><meshStandardMaterial color="#d8b94e"/></mesh>
@@ -241,8 +237,7 @@ function Landmark({a}:{a:typeof places[number]}){
  </group>;
 }
 
-function Building({a}:{a:typeof places[number]}){
- const[,x,z,w,h,d]=a;
+function Building({a}:{a:typeof places[number]}){const[,x,z,w,h,d]=a;
  return <group position={[x,h/2,z]}>
    <mesh castShadow receiveShadow><boxGeometry args={[w,h,d]}/><meshStandardMaterial color="#9a8f80"/></mesh>
    <mesh position={[0,-h/2+1,d/2+.03]}><boxGeometry args={[1.2,1.4,.08]}/><meshStandardMaterial color="#4c2c1e"/></mesh>
@@ -276,8 +271,11 @@ function Scene({move,cameraYaw=0,cameraPitch=.48,jump=0,onPositionChange,onNearb
    <ambientLight intensity={1.15}/>
    <directionalLight position={[8,14,6]} intensity={2.6} castShadow/>
    <mesh rotation={[-Math.PI/2,0,0]} receiveShadow><planeGeometry args={[12000,12000]}/><meshStandardMaterial color="#68705f"/></mesh>
-   <RoadNetwork/>\n   <CityStreets/>\n   <UrbanBuildings/>
-   {districtBounds.map(b=><DistrictBoundary key={b.name} {...b}/>)}\n   <DistrictSign name="CENTRAL AREA" position={[...G(9.055,7.49),.1]}/>
+   <RoadNetwork/>
+   <CityStreets/>
+   <UrbanBuildings/>
+   {districtBounds.map(b=><DistrictBoundary key={b.name} {...b}/>}
+   <DistrictSign name="CENTRAL AREA" position={[...G(9.055,7.49),.1]}/>
    <DistrictSign name="WUSE" position={[...G(9.081,7.476),.1]}/>
    <DistrictSign name="GARKI" position={[...G(9.029,7.483),.1]}/>
    {places.map(a=>a[0].includes("National")||a[0]==="Eagle Square"||a[0]==="Abuja City Gate"||a[0]==="Wuse Market"?<Landmark key={a[0]} a={a}/>:<Building key={a[0]} a={a}/>)}
