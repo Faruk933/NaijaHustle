@@ -197,7 +197,7 @@ function UrbanBuildings(){return <group>
    <mesh position={[0,.2,b.d/2+.04]}><boxGeometry args={[Math.min(18,b.w*.3),Math.min(10,b.h*.18),.08]}/><meshStandardMaterial color="#4b91b5"/></mesh>
  </group>)}
  </group>}
-\nfunction RoadNetwork(){return <group>
+function RoadNetwork(){return <group>
  {roads.map((r,i)=><mesh key={i} position={[r.x,.025,r.z]} receiveShadow><boxGeometry args={[r.w,.05,r.d]}/><meshStandardMaterial color="#252825"/></mesh>)}
  
  
