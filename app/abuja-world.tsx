@@ -153,8 +153,18 @@ function Player({move,cameraYaw,jump,playerRef,onPositionChange,groundRef}:{move
    <group ref={rl} position={[.19,.61,0]}><mesh castShadow position={[0,-.43,0]}><capsuleGeometry args={[.145,.62,8,12]}/><meshStandardMaterial color="#202936" roughness={.85}/></mesh><mesh castShadow position={[0,-.78,.12]}><boxGeometry args={[.28,.16,.48]}/><meshStandardMaterial color="#111820" roughness={.9}/></mesh></group>
  </group>
 }
-const roads=[
- {x:0,z:0,w:24,d:12000},{x:0,z:0,w:12000,d:24},{x:-1200,z:900,w:18,d:5000},{x:1200,z:-500,w:18,d:5000},{x:-2500,z:1200,w:18,d:4200},{x:2500,z:-1200,w:18,d:4200}
+type Road={x:number;z:number;w:number;d:number};
+const roads:Road[]=[
+ {x:0,z:0,w:34,d:12000},{x:0,z:0,w:12000,d:34},
+ {x:-900,z:0,w:24,d:5200},{x:900,z:0,w:24,d:5200},
+ {x:0,z:-850,w:24,d:4200},{x:0,z:850,w:24,d:4200},
+ {x:-1850,z:900,w:24,d:4200},{x:1850,z:-900,w:24,d:4200},
+ {x:-2500,z:1200,w:22,d:4200},{x:2500,z:-1200,w:22,d:4200},
+ {x:-1200,z:900,w:22,d:5000},{x:1200,z:-500,w:22,d:5000}
+] as const;
+const intersections=[
+ {x:0,z:0,r:42},{x:-900,z:0,r:34},{x:900,z:0,r:34},
+ {x:0,z:-850,r:34},{x:0,z:850,r:34},{x:-1200,z:900,r:34},{x:1200,z:-500,r:34}
 ] as const;
 const districtBounds=[
  {name:"CENTRAL AREA",x:G(9.055,7.49)[0],z:G(9.055,7.49)[1],w:3200,d:3000},
@@ -174,6 +184,10 @@ function UrbanBuildings(){return <group>
  </group>}
 function RoadNetwork(){return <group>
  {roads.map((r,i)=><mesh key={i} position={[r.x,.025,r.z]} receiveShadow><boxGeometry args={[r.w,.05,r.d]}/><meshStandardMaterial color="#252825"/></mesh>)}
+ {intersections.map((r,i)=><group key={"i"+i} position={[r.x,.07,r.z]}>
+   <mesh receiveShadow><cylinderGeometry args={[r.r,r.r,.06,32]}/><meshStandardMaterial color="#252825"/></mesh>
+   <mesh position={[0,.035,0]}><cylinderGeometry args={[Math.max(4,r.r*.16),Math.max(4,r.r*.16),.015,24]}/><meshStandardMaterial color="#68705f"/></mesh>
+ </group>)}
  <mesh position={[0,.085,0]}><cylinderGeometry args={[6,6,.03,48]}/><meshStandardMaterial color="#3b3d36"/></mesh>
  <mesh position={[0,.1,0]}><cylinderGeometry args={[3.2,3.2,.04,48]}/><meshStandardMaterial color="#68705f"/></mesh>
  </group>}
