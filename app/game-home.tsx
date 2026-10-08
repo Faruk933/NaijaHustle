@@ -86,7 +86,7 @@ export default function GameHome(){
    const dx=e.clientX-lookStart.current.x,dy=e.clientY-lookStart.current.y;
    if(Math.abs(dx)+Math.abs(dy)<.5)return;
    setCameraYaw(y=>y-dx*.012);
-   setCameraPitch(p=>Math.max(.18,Math.min(1.15,p-dy*.009)));
+   setCameraPitch(p=>Math.max(.18,Math.min(1.15,p+dy*.009)));
    lookStart.current={x:e.clientX,y:e.clientY};
  };
  const endLook=()=>setLookActive(false);
