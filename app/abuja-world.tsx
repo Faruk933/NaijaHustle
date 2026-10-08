@@ -17,7 +17,11 @@ const places=[
  ["Garki Shop",-9,9,6,4.4,6],["Jabi Apartment",9,10,7,6,5],
  ["STREET KIOSK",-6.0,-6.0,3.0,3.0,2.4],
  ["CBD Tower",12,-7,5,9,5],["Wuse Plaza",14,-15,7,5,5],
- ["Garki Market",-15,13,7,4.5,6],["Garki Office",-12,20,6,7,6]
+ ["Garki Market",-15,13,7,4.5,6],["Garki Office",-12,20,6,7,6],
+ ["National Mosque",-5,-12,7,5,7],["National Christian Centre",3,-12,7,6,7],
+ ["Eagle Square",0,-20,10,1,8],["Wuse Market",15,-8,9,5,8],
+ ["Abuja ICC",-15,8,8,6,7],["Garki Post Office",-21,14,5,4,5],
+ ["Radio House",-20,22,5,12,5],["Abuja City Gate",-22,8,5,5,4]
 ] as const;
 
 type Collider={x:number;z:number,w:number,d:number};
@@ -155,6 +159,36 @@ function DistrictSign({name,position}:{name:string;position:[number,number,numbe
  <mesh position={[-1.15,.55,0]}><cylinderGeometry args={[.06,.06,1.6,8]}/><meshStandardMaterial color="#55564e"/></mesh>
  <mesh position={[1.15,.55,0]}><cylinderGeometry args={[.06,.06,1.6,8]}/><meshStandardMaterial color="#55564e"/></mesh>
  </group>}
+function Landmark({a}:{a:typeof places[number]}){
+ const[name,x,z,w,h,d]=a;
+ if(name==="National Mosque")return <group position={[x,0,z]}>
+   <mesh castShadow position={[0,2.2,0]}><cylinderGeometry args={[3.5,4,.5,32]}/><meshStandardMaterial color="#d8d1bd"/></mesh>
+   <mesh castShadow position={[0,4.1,0]}><sphereGeometry args={[1.5,24,16]}/><meshStandardMaterial color="#d8b94e"/></mesh>
+   {[[-3,2,0],[3,2,0],[0,2,-3],[0,2,3]].map((p,i)=><mesh key={i} castShadow position={p as [number,number,number]}><cylinderGeometry args={[.45,.65,4.8,12]}/><meshStandardMaterial color="#eee8d8"/></mesh>)}
+ </group>;
+ if(name==="National Christian Centre")return <group position={[x,0,z]}>
+   <mesh castShadow position={[0,2.5,0]} rotation={[0,0,.18]}><boxGeometry args={[2.8,5,1.2]}/><meshStandardMaterial color="#c8c3b6"/></mesh>
+   <mesh castShadow position={[0,2.5,0]} rotation={[0,0,-.18]}><boxGeometry args={[2.8,5,1.2]}/><meshStandardMaterial color="#aaa69b"/></mesh>
+   <mesh castShadow position={[0,5.4,0]}><sphereGeometry args={[.55,16,12]}/><meshStandardMaterial color="#d8b94e"/></mesh>
+ </group>;
+ if(name==="Eagle Square")return <group position={[x,.15,z]}>
+   <mesh receiveShadow><boxGeometry args={[w,.3,d]}/><meshStandardMaterial color="#68705f"/></mesh>
+   <mesh position={[0,1.8,0]}><cylinderGeometry args={[.15,.28,3.6,10]}/><meshStandardMaterial color="#c7c1a9"/></mesh>
+   <mesh position={[0,3.65,0]}><boxGeometry args={[2,.15,.15]}/><meshStandardMaterial color="#c7c1a9"/></mesh>
+ </group>;
+ if(name==="Abuja City Gate")return <group position={[x,0,z]}>
+   <mesh castShadow position={[-1.6,2,0]} rotation={[0,0,-.35]}><boxGeometry args={[.8,4.5,.9]}/><meshStandardMaterial color="#d6d0be"/></mesh>
+   <mesh castShadow position={[1.6,2,0]} rotation={[0,0,.35]}><boxGeometry args={[.8,4.5,.9]}/><meshStandardMaterial color="#d6d0be"/></mesh>
+   <mesh castShadow position={[0,3.8,0]}><boxGeometry args={[4.2,.7,1]}/><meshStandardMaterial color="#b9b09b"/></mesh>
+ </group>;
+ return <group position={[x,h/2,z]}>
+   <mesh castShadow receiveShadow><boxGeometry args={[w,h,d]}/><meshStandardMaterial color="#9a8f80"/></mesh>
+   <mesh position={[0,-h/2+1,d/2+.03]}><boxGeometry args={[1.2,1.4,.08]}/><meshStandardMaterial color="#4c2c1e"/></mesh>
+   <mesh position={[0,0,d/2+.04]}><boxGeometry args={[2,.9,.06]}/><meshStandardMaterial color="#4e9bc7"/></mesh>
+   {name==="Wuse Market"&&<group>{[-2.8,0,2.8].map((px,i)=><mesh key={i} position={[px,h+.7,0]}><coneGeometry args={[1.3,.9,4]}/><meshStandardMaterial color="#b88a52"/></mesh>)}</group>}
+ </group>;
+}
+
 function Building({a}:{a:typeof places[number]}){
  const[,x,z,w,h,d]=a;
  return <group position={[x,h/2,z]}>
@@ -194,7 +228,7 @@ function Scene({move,cameraYaw=0,cameraPitch=.48,jump=0,onPositionChange,onNearb
    {districtBounds.map(b=><DistrictBoundary key={b.name} {...b}/>)}\n   <DistrictSign name="CENTRAL AREA" position={[-8,.1,3]}/>
    <DistrictSign name="WUSE" position={[13,.1,-20]}/>
    <DistrictSign name="GARKI" position={[-14,.1,20]}/>
-   {places.map(a=><Building key={a[0]} a={a}/>)}
+   {places.map(a=>a[0].includes("National")||a[0]==="Eagle Square"||a[0]==="Abuja City Gate"||a[0]==="Wuse Market"?<Landmark key={a[0]} a={a}/>:<Building key={a[0]} a={a}/>)}
    <Player move={move} cameraYaw={cameraYaw} jump={jump} onPositionChange={onPositionChange} playerRef={pr}/>
  </>
 }
