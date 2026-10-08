@@ -1,4 +1,4 @@
-`use client`;
+"use client";
 
 import {Canvas,useFrame,useThree} from "@react-three/fiber";
 import {useRef,type RefObject} from "react";
@@ -11,6 +11,7 @@ type Props={
  cameraYaw?:number;
  cameraPitch?:number;
  jump?:number;
+ running?:boolean;
 };
 
 const WORLD_ORIGIN={lat:9.055,lon:7.49};
@@ -76,7 +77,7 @@ function tryMove(pos:THREE.Vector3,dx:number,dz:number){
  return {x,z};
 }
 
-function Player({move,cameraYaw,jump,playerRef,onPositionChange,groundRef}:{move?:Props["move"];cameraYaw:number;jump:number;playerRef:RefObject<THREE.Group|null>;onPositionChange?:Props["onPositionChange"];groundRef:RefObject<THREE.Mesh|null>}){ 
+function Player({move,cameraYaw,jump,running,playerRef,onPositionChange,groundRef}:{move?:Props["move"];cameraYaw:number;jump:number;running:boolean;playerRef:RefObject<THREE.Group|null>;onPositionChange?:Props["onPositionChange"];groundRef:RefObject<THREE.Mesh|null>}){ 
  const g=useRef<THREE.Group>(null),la=useRef<THREE.Group>(null),ra=useRef<THREE.Group>(null),ll=useRef<THREE.Group>(null),rl=useRef<THREE.Group>(null);
  const torso=useRef<THREE.Group>(null),velocity=useRef(new THREE.Vector2()),vertical=useRef(0),grounded=useRef(true),lastGrounded=useRef(true),lastJump=useRef(0),walk=useRef(0),ray=useRef(new THREE.Raycaster()),wasMoving=useRef(false);
  useFrame((_,delta)=>{
@@ -91,7 +92,7 @@ function Player({move,cameraYaw,jump,playerRef,onPositionChange,groundRef}:{move
    if(jump!==lastJump.current){lastJump.current=jump;if(grounded.current){vertical.current=6.4;grounded.current=false;}}
    const v=velocity.current,forward=new THREE.Vector2(-Math.sin(cameraYaw),-Math.cos(cameraYaw)),right=new THREE.Vector2(Math.cos(cameraYaw),-Math.sin(cameraYaw));
    const worldMove=right.multiplyScalar(v.x).add(forward.multiplyScalar(-v.y));
-   const speed=5.2,distance=worldMove.length()*speed*d,steps=Math.max(1,Math.ceil(distance/.20));
+   const speed=running?9.2:5.2,distance=worldMove.length()*speed*d,steps=Math.max(1,Math.ceil(distance/.20));
    let moved=false;
    for(let i=0;i<steps;i++){
      const stepScale=1/steps,sx=worldMove.x*speed*d*stepScale,sz=worldMove.y*speed*d*stepScale,next=tryMove(p.position,sx,sz);
@@ -100,7 +101,7 @@ function Player({move,cameraYaw,jump,playerRef,onPositionChange,groundRef}:{move
    if(moved){
      const dir=new THREE.Vector2(worldMove.x,worldMove.y);
      if(dir.lengthSq()>.001){dir.normalize();const targetRot=Math.atan2(dir.x,dir.y);p.rotation.y=THREE.MathUtils.lerp(p.rotation.y,targetRot,1-Math.exp(-14*d));}
-     walk.current+=d*(hasInput?13:0);
+     walk.current+=d*(hasInput?(running?20:13):0);
      onPositionChange?.(p.position.x,p.position.z);
    }
    const floor=groundRef.current;
@@ -121,7 +122,7 @@ function Player({move,cameraYaw,jump,playerRef,onPositionChange,groundRef}:{move
    }
    if(grounded.current&&!lastGrounded.current)walk.current+=.15;
    lastGrounded.current=grounded.current;
-   const moving=velocity.current.lengthSq()>.015,swing=moving?Math.sin(walk.current)*.72:0,idle=Math.sin(performance.now()/520)*.025;
+   const moving=velocity.current.lengthSq()>.015,swing=moving?Math.sin(walk.current)*(running?.88:.72):0,idle=Math.sin(performance.now()/520)*.025;
    if(la.current)la.current.rotation.x=grounded.current?swing:0;
    if(ra.current)ra.current.rotation.x=grounded.current?-swing:0;
    if(ll.current)ll.current.rotation.x=grounded.current?-swing:0;
@@ -141,7 +142,7 @@ function Player({move,cameraYaw,jump,playerRef,onPositionChange,groundRef}:{move
    <group position={[0,1.72,0]}>
      <mesh castShadow><sphereGeometry args={[.34,24,18]}/><meshStandardMaterial color="#7b4b32" roughness={.85}/></mesh>
      <mesh castShadow position={[0,.18,-.02]} scale={[1.02,.58,1.02]}><sphereGeometry args={[.34,20,14]}/><meshStandardMaterial color="#17130f" roughness={.95}/></mesh>
-     <mesh castShadow position={[0,.29,.01]} rotation={[.15,0,0]}><sphereGeometry args={[.22,16,10]}/><meshStandardMaterial color="#17130f"/></mesh>
+     <mesh castShadow position={[0,.29,.01]}><sphereGeometry args={[.22,16,10]}/><meshStandardMaterial color="#17130f"/></mesh>
      <mesh position={[-.12,.02,.315]}><sphereGeometry args={[.035,12,8]}/><meshStandardMaterial color="#17130f"/></mesh>
      <mesh position={[.12,.02,.315]}><sphereGeometry args={[.035,12,8]}/><meshStandardMaterial color="#17130f"/></mesh>
      <mesh position={[-.11,.03,.342]}><sphereGeometry args={[.018,10,8]}/><meshStandardMaterial color="#f5f5e8" emissive="#333333"/></mesh>
@@ -210,7 +211,7 @@ function Building({a}:{a:typeof places[number]}){const[,x,z,w,h,d]=a;
  return <group position={[x,h/2,z]}><mesh castShadow receiveShadow><boxGeometry args={[w,h,d]}/><meshStandardMaterial color="#9a8f80"/></mesh><mesh position={[0,-h/2+1,d/2+.03]}><boxGeometry args={[1.2,1.4,.08]}/><meshStandardMaterial color="#4c2c1e"/></mesh><mesh position={[0,0,d/2+.04]}><boxGeometry args={[2,.9,.06]}/><meshStandardMaterial color="#4e9bc7"/></mesh>{a[0]==="STREET KIOSK"&&<group position={[0,0,d/2+.08]}><mesh position={[0,.95,0]}><boxGeometry args={[2.55,.48,.08]}/><meshStandardMaterial color="#18231d"/></mesh><mesh position={[0,.95,.05]}><boxGeometry args={[2.35,.25,.03]}/><meshStandardMaterial color="#d8f36b"/></mesh></group>}</group>
 }
 
-function Scene({move,cameraYaw=0,cameraPitch=.48,jump=0,onPositionChange,onNearbyChange}:{move?:Props["move"];cameraYaw?:number;cameraPitch?:number;jump?:number;onPositionChange?:Props["onPositionChange"];onNearbyChange?:Props["onNearbyChange"]}){
+function Scene({move,cameraYaw=0,cameraPitch=.48,jump=0,running=false,onPositionChange,onNearbyChange}:{move?:Props["move"];cameraYaw?:number;cameraPitch?:number;jump?:number;running?:boolean;onPositionChange?:Props["onPositionChange"];onNearbyChange?:Props["onNearbyChange"]}){
  const pr=useRef<THREE.Group|null>(null),ground=useRef<THREE.Mesh|null>(null),{camera}=useThree(),last=useRef<string|null>(null),lookTarget=useRef(new THREE.Vector3());
  useFrame((_,d)=>{
    const p=pr.current;if(!p)return;
@@ -230,8 +231,8 @@ function Scene({move,cameraYaw=0,cameraPitch=.48,jump=0,onPositionChange,onNearb
    <DistrictSign name="CENTRAL AREA" position={[...G(9.055,7.49),.1]}/>
    <DistrictSign name="WUSE" position={[...G(9.081,7.476),.1]}/>
    <DistrictSign name="GARKI" position={[...G(9.029,7.483),.1]}/>
-   {places.map(a=>a[0].includes("National")||a[0]==="Eagle Square"||a[0]==="Abuja City Gate"||a[0]==="Wuse Market"?<Landmark key={a[0]} a={a}/>:<Building key={a[0]} a={a}/>)} 
-   <Player move={move} cameraYaw={cameraYaw} jump={jump} onPositionChange={onPositionChange} playerRef={pr} groundRef={ground}/>
+   {places.map(a=>a[0].includes("National")||a[0]==="Eagle Square"||a[0]==="Abuja City Gate"||a[0]==="Wuse Market"?<Landmark key={a[0]} a={a}/>:<Building key={a[0]} a={a}/>)}
+   <Player move={move} cameraYaw={cameraYaw} jump={jump} running={running} onPositionChange={onPositionChange} playerRef={pr} groundRef={ground}/>
  </>
 }
 
