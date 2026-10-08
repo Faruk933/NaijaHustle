@@ -245,3 +245,5 @@ button, a { font: inherit; }
 @media (min-width:800px){.touch-controls{height:240px;padding:28px}.joystick{width:140px;height:140px}.action-buttons button{width:76px;height:76px}}
 
 .nearby-action{position:absolute;z-index:4;top:112px;left:50%;transform:translateX(-50%);border:1px solid #ffffff55;border-radius:999px;padding:10px 15px;background:#101510ee;color:var(--accent);font-size:11px;font-weight:900;letter-spacing:.04em}
+
+.camera-zone{position:absolute;inset:0;z-index:1;touch-action:none}.camera-zone .world-canvas{z-index:0}.hud,.hud-stats,.nearby-action,.touch-controls,.modal,.toast{z-index:3}.touch-controls{pointer-events:none}.joystick,.action-buttons{position:relative;z-index:4}
