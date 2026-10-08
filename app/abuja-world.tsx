@@ -136,6 +136,11 @@ const roads=[
  {x:0,z:0,w:9,d:80},{x:0,z:0,w:80,d:9},{x:12,z:0,w:7,d:80},
  {x:-13,z:0,w:7,d:80},{x:0,z:-15,w:80,d:7},{x:0,z:15,w:80,d:7}
 ] as const;
+const districtBounds=[
+ {name:"CENTRAL AREA",x:-1,z:1,w:24,d:24},
+ {name:"WUSE",x:12,z:-13,w:22,d:18},
+ {name:"GARKI",x:-12,z:15,w:22,d:18}
+] as const;
 function RoadNetwork(){return <group>
  {roads.map((r,i)=><mesh key={i} position={[r.x,.025,r.z]} receiveShadow><boxGeometry args={[r.w,.05,r.d]}/><meshStandardMaterial color="#252825"/></mesh>)}
  {[-30,-20,-10,10,20,30].map(z=><mesh key={"v"+z} position={[0,.09,z]}><boxGeometry args={[.12,.02,3.2]}/><meshStandardMaterial color="#e7e1bd"/></mesh>)}
@@ -143,6 +148,7 @@ function RoadNetwork(){return <group>
  <mesh position={[0,.085,0]}><cylinderGeometry args={[6,6,.03,48]}/><meshStandardMaterial color="#3b3d36"/></mesh>
  <mesh position={[0,.1,0]}><cylinderGeometry args={[3.2,3.2,.04,48]}/><meshStandardMaterial color="#68705f"/></mesh>
  </group>}
+function DistrictBoundary({x,z,w,d}:{x:number;z:number;w:number;d:number}){return <mesh position={[x,.045,z]}><boxGeometry args={[w,.02,d]}/><meshStandardMaterial color="#d8f36b" transparent opacity={.035}/></mesh>}
 function DistrictSign({name,position}:{name:string;position:[number,number,number]}){return <group position={position}>
  <mesh position={[0,1.35,0]}><boxGeometry args={[2.8,.75,.12]}/><meshStandardMaterial color="#18231d"/></mesh>
  <mesh position={[0,1.35,.07]}><boxGeometry args={[2.45,.42,.03]}/><meshStandardMaterial color="#d8f36b"/></mesh>
@@ -185,7 +191,7 @@ function Scene({move,cameraYaw=0,cameraPitch=.48,jump=0,onPositionChange,onNearb
    <directionalLight position={[8,14,6]} intensity={2.6} castShadow/>
    <mesh rotation={[-Math.PI/2,0,0]} receiveShadow><planeGeometry args={[80,80]}/><meshStandardMaterial color="#68705f"/></mesh>
    <RoadNetwork/>
-   <DistrictSign name="CENTRAL AREA" position={[-8,.1,3]}/>
+   {districtBounds.map(b=><DistrictBoundary key={b.name} {...b}/>)}\n   <DistrictSign name="CENTRAL AREA" position={[-8,.1,3]}/>
    <DistrictSign name="WUSE" position={[13,.1,-20]}/>
    <DistrictSign name="GARKI" position={[-14,.1,20]}/>
    {places.map(a=><Building key={a[0]} a={a}/>)}
