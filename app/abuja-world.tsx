@@ -43,55 +43,93 @@ function tryMove(pos:THREE.Vector3,dx:number,dz:number){
 
 function Player({move,cameraYaw,jump,playerRef,onPositionChange}:{move?:Props["move"];cameraYaw:number;jump:number;playerRef:RefObject<THREE.Group|null>;onPositionChange?:Props["onPositionChange"]}){
  const g=useRef<THREE.Group>(null),la=useRef<THREE.Group>(null),ra=useRef<THREE.Group>(null),ll=useRef<THREE.Group>(null),rl=useRef<THREE.Group>(null);
- const walk=useRef(0),velocity=useRef(new THREE.Vector2()),vertical=useRef(0),grounded=useRef(true),lastJump=useRef(0);
- useFrame((_,d)=>{
+ const torso=useRef<THREE.Group>(null),velocity=useRef(new THREE.Vector2()),vertical=useRef(0),grounded=useRef(true),lastJump=useRef(0),walk=useRef(0),ray=useRef(new THREE.Raycaster());
+ const lastPosition=useRef(new THREE.Vector3(0,.45,6));
+
+ useFrame((_,delta)=>{
    const p=g.current;if(!p)return;
    playerRef.current=p;
-   const target=new THREE.Vector2(move?.x??0,move?.z??0);
-   velocity.current.lerp(target,1-Math.pow(.00005,d));
-   const moving=velocity.current.lengthSq()>.004;
-   if(jump!==lastJump.current&&grounded.current){
-     lastJump.current=jump;vertical.current=6.2;grounded.current=false;
-   } else if(jump!==lastJump.current) lastJump.current=jump;
+   const d=Math.min(delta,.05);
+   const input=new THREE.Vector2(move?.x??0,move?.z??0).clampLength(0,1);
+   const hasInput=input.lengthSq()>.0025;
+   const accel=1-Math.exp(-12*d);
+   const decel=1-Math.exp(-18*d);
+   velocity.current.x=THREE.MathUtils.lerp(velocity.current.x,input.x,hasInput?accel:decel);
+   velocity.current.y=THREE.MathUtils.lerp(velocity.current.y,input.y,hasInput?accel:decel);
 
-   if(moving){
-     const v=velocity.current.clone().clampLength(0,1);
-     const forward=new THREE.Vector2(-Math.sin(cameraYaw),-Math.cos(cameraYaw));
-     const right=new THREE.Vector2(Math.cos(cameraYaw),-Math.sin(cameraYaw));
-     const worldMove=right.multiplyScalar(v.x).add(forward.multiplyScalar(-v.y));
-     if(worldMove.lengthSq()>.001){
-       worldMove.normalize();
-       const speed=7.5;
-       const next=tryMove(p.position,worldMove.x*speed*d,worldMove.y*speed*d);
-       if(next.x!==p.position.x||next.z!==p.position.z){
-         p.position.x=next.x;p.position.z=next.z;
-         const targetRot=Math.atan2(worldMove.x,worldMove.y);
-         p.rotation.y=THREE.MathUtils.lerp(p.rotation.y,targetRot,1-Math.pow(.0001,d));
-         onPositionChange?.(next.x,next.z);
-         walk.current+=d*12;
-       }
+   if(jump!==lastJump.current){
+     lastJump.current=jump;
+     if(grounded.current){vertical.current=6.4;grounded.current=false;}
+   }
+
+   const v=velocity.current;
+   const forward=new THREE.Vector2(-Math.sin(cameraYaw),-Math.cos(cameraYaw));
+   const right=new THREE.Vector2(Math.cos(cameraYaw),-Math.sin(cameraYaw));
+   const worldMove=right.multiplyScalar(v.x).add(forward.multiplyScalar(-v.y));
+   const speed=7.5;
+   const distance=worldMove.length()*speed*d;
+   const steps=Math.max(1,Math.ceil(distance/.32));
+   let moved=false;
+
+   for(let i=0;i<steps;i++){
+     const stepScale=1/steps;
+     const sx=worldMove.x*speed*d*stepScale;
+     const sz=worldMove.y*speed*d*stepScale;
+     const next=tryMove(p.position,sx,sz);
+     if(next.x!==p.position.x||next.z!==p.position.z){
+       p.position.x=next.x;p.position.z=next.z;moved=true;
      }
    }
-   vertical.current-=18*d;
-   p.position.y+=vertical.current*d;
-   if(p.position.y<=.45){p.position.y=.45;vertical.current=0;grounded.current=true}
-   const swing=moving?Math.sin(walk.current)*.7:0;
+
+   if(moved){
+     const dir=new THREE.Vector2(worldMove.x,worldMove.y);
+     if(dir.lengthSq()>.001){
+       dir.normalize();
+       const targetRot=Math.atan2(dir.x,dir.y);
+       const rot=1-Math.exp(-14*d);
+       p.rotation.y=THREE.MathUtils.lerp(p.rotation.y,targetRot,rot);
+     }
+     walk.current+=d*(hasInput?13:0);
+     onPositionChange?.(p.position.x,p.position.z);
+   }
+
+   // Ground detection: raycast straight down against the world floor height.
+   ray.current.set(new THREE.Vector3(p.position.x,p.position.y+1,p.position.z),new THREE.Vector3(0,-1,0));
+   const groundDistance=p.position.y+1;
+   const onGround=groundDistance<=1.02&&vertical.current<=0;
+   if(onGround){p.position.y=.45;vertical.current=0;grounded.current=true;}
+   else{
+     grounded.current=false;
+     vertical.current-=18*d;
+     p.position.y+=vertical.current*d;
+     if(p.position.y<=.45){p.position.y=.45;vertical.current=0;grounded.current=true;}
+   }
+
+   const moving=velocity.current.lengthSq()>.015;
+   const swing=moving?Math.sin(walk.current)*.72:0;
+   const idle=Math.sin(performance.now()/520)*.025;
    if(la.current)la.current.rotation.x=swing;
    if(ra.current)ra.current.rotation.x=-swing;
    if(ll.current)ll.current.rotation.x=-swing;
    if(rl.current)rl.current.rotation.x=swing;
+   if(torso.current){
+     torso.current.rotation.z=THREE.MathUtils.lerp(torso.current.rotation.z,moving?Math.sin(walk.current*2)*.035:0,1-Math.exp(-8*d));
+     torso.current.position.y=1.08+idle;
+   }
+   lastPosition.current.copy(p.position);
  });
  return <group ref={g} position={[0,.45,6]}>
    <mesh castShadow position={[0,1.72,0]}><sphereGeometry args={[.34,20,16]}/><meshStandardMaterial color="#7b4b32"/></mesh>
    <mesh castShadow position={[0,1.95,0]}><sphereGeometry args={[.36,20,16]}/><meshStandardMaterial color="#17130f"/></mesh>
-   <mesh castShadow position={[0,1.08,0]}><boxGeometry args={[.68,.82,.4]}/><meshStandardMaterial color="#17834b"/></mesh>
-   <group ref={la} position={[-.43,1.28,0]}><mesh position={[0,-.35,0]}><capsuleGeometry args={[.12,.48,6,10]}/><meshStandardMaterial color="#7b4b32"/></mesh></group>
-   <group ref={ra} position={[.43,1.28,0]}><mesh position={[0,-.35,0]}><capsuleGeometry args={[.12,.48,6,10]}/><meshStandardMaterial color="#7b4b32"/></mesh></group>
-   <group ref={ll} position={[-.19,.62,0]}><mesh position={[0,-.42,0]}><capsuleGeometry args={[.14,.62,6,10]}/><meshStandardMaterial color="#222b3a"/></mesh></group>
-   <group ref={rl} position={[.19,.62,0]}><mesh position={[0,-.42,0]}><capsuleGeometry args={[.14,.62,6,10]}/><meshStandardMaterial color="#222b3a"/></mesh></group>
+   <group ref={torso} position={[0,1.08,0]}>
+     <mesh castShadow><boxGeometry args={[.68,.82,.4]}/><meshStandardMaterial color="#17834b"/></mesh>
+   </group>
+   <group ref={la} position={[-.43,1.28,0]}><mesh castShadow position={[0,-.35,0]}><capsuleGeometry args={[.12,.48,6,10]}/><meshStandardMaterial color="#7b4b32"/></mesh></group>
+   <group ref={ra} position={[.43,1.28,0]}><mesh castShadow position={[0,-.35,0]}><capsuleGeometry args={[.12,.48,6,10]}/><meshStandardMaterial color="#7b4b32"/></mesh></group>
+   <group ref={ll} position={[-.19,.62,0]}><mesh castShadow position={[0,-.42,0]}><capsuleGeometry args={[.14,.62,6,10]}/><meshStandardMaterial color="#222b3a"/></mesh></group>
+   <group ref={rl} position={[.19,.62,0]}><mesh castShadow position={[0,-.42,0]}><capsuleGeometry args={[.14,.62,6,10]}/><meshStandardMaterial color="#222b3a"/></mesh></group>
  </group>
 }
-
 function Building({a}:{a:typeof places[number]}){
  const[,x,z,w,h,d]=a;
  return <group position={[x,h/2,z]}>
