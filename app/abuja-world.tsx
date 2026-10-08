@@ -75,30 +75,61 @@ function tryMove(pos:THREE.Vector3,dx:number,dz:number){
  return {x,z};
 }
 
-function Player({move,cameraYaw,jump,playerRef,onPositionChange}:{move?:Props["move"];cameraYaw:number;jump:number;playerRef:RefObject<THREE.Group|null>;onPositionChange?:Props["onPositionChange"]}){
+function Player({move,cameraYaw,jump,playerRef,onPositionChange,groundRef}:{move?:Props["move"];cameraYaw:number;jump:number;playerRef:RefObject<THREE.Group|null>;onPositionChange?:Props["onPositionChange"];groundRef:RefObject<THREE.Mesh|null>}){ 
  const g=useRef<THREE.Group>(null),la=useRef<THREE.Group>(null),ra=useRef<THREE.Group>(null),ll=useRef<THREE.Group>(null),rl=useRef<THREE.Group>(null);
- const torso=useRef<THREE.Group>(null),velocity=useRef(new THREE.Vector2()),vertical=useRef(0),grounded=useRef(true),lastJump=useRef(0),walk=useRef(0),ray=useRef(new THREE.Raycaster());
+ const torso=useRef<THREE.Group>(null),velocity=useRef(new THREE.Vector2()),vertical=useRef(0),grounded=useRef(true),lastGrounded=useRef(true),lastJump=useRef(0),walk=useRef(0),ray=useRef(new THREE.Raycaster()),wasMoving=useRef(false);
  useFrame((_,delta)=>{
    const p=g.current;if(!p)return;
    playerRef.current=p;
    const d=Math.min(delta,.05);
    const input=new THREE.Vector2(move?.x??0,move?.z??0).clampLength(0,1);
    const hasInput=input.lengthSq()>.0025;
-   const accel=1-Math.exp(-12*d),decel=1-Math.exp(-18*d);
+   const accel=1-Math.exp(-11*d),decel=1-Math.exp(-20*d);
    velocity.current.x=THREE.MathUtils.lerp(velocity.current.x,input.x,hasInput?accel:decel);
    velocity.current.y=THREE.MathUtils.lerp(velocity.current.y,input.y,hasInput?accel:decel);
    if(jump!==lastJump.current){lastJump.current=jump;if(grounded.current){vertical.current=6.4;grounded.current=false;}}
    const v=velocity.current,forward=new THREE.Vector2(-Math.sin(cameraYaw),-Math.cos(cameraYaw)),right=new THREE.Vector2(Math.cos(cameraYaw),-Math.sin(cameraYaw));
-   const worldMove=right.multiplyScalar(v.x).add(forward.multiplyScalar(-v.y)),speed=5.2,distance=worldMove.length()*speed*d,steps=Math.max(1,Math.ceil(distance/.32));
+   const worldMove=right.multiplyScalar(v.x).add(forward.multiplyScalar(-v.y));
+   const speed=5.2,distance=worldMove.length()*speed*d,steps=Math.max(1,Math.ceil(distance/.24));
    let moved=false;
-   for(let i=0;i<steps;i++){const stepScale=1/steps,sx=worldMove.x*speed*d*stepScale,sz=worldMove.y*speed*d*stepScale,next=tryMove(p.position,sx,sz);if(next.x!==p.position.x||next.z!==p.position.z){p.position.x=next.x;p.position.z=next.z;moved=true;}}
-   if(moved){const dir=new THREE.Vector2(worldMove.x,worldMove.y);if(dir.lengthSq()>.001){dir.normalize();const targetRot=Math.atan2(dir.x,dir.y);p.rotation.y=THREE.MathUtils.lerp(p.rotation.y,targetRot,1-Math.exp(-14*d));}walk.current+=d*(hasInput?13:0);onPositionChange?.(p.position.x,p.position.z);}
-   ray.current.set(new THREE.Vector3(p.position.x,p.position.y+1,p.position.z),new THREE.Vector3(0,-1,0));
-   const groundDistance=p.position.y+1,onGround=groundDistance<=1.02&&vertical.current<=0;
-   if(onGround){p.position.y=.45;vertical.current=0;grounded.current=true;}else{grounded.current=false;vertical.current-=18*d;p.position.y+=vertical.current*d;if(p.position.y<=.45){p.position.y=.45;vertical.current=0;grounded.current=true;}}
+   for(let i=0;i<steps;i++){
+     const stepScale=1/steps,sx=worldMove.x*speed*d*stepScale,sz=worldMove.y*speed*d*stepScale,next=tryMove(p.position,sx,sz);
+     if(next.x!==p.position.x||next.z!==p.position.z){p.position.x=next.x;p.position.z=next.z;moved=true;}
+   }
+   if(moved){
+     const dir=new THREE.Vector2(worldMove.x,worldMove.y);
+     if(dir.lengthSq()>.001){dir.normalize();const targetRot=Math.atan2(dir.x,dir.y);p.rotation.y=THREE.MathUtils.lerp(p.rotation.y,targetRot,1-Math.exp(-14*d));}
+     walk.current+=d*(hasInput?13:0);
+     onPositionChange?.(p.position.x,p.position.z);
+   }
+   const floor=groundRef.current;
+   let floorY=.0;
+   if(floor){
+     ray.current.set(new THREE.Vector3(p.position.x,p.position.y+1.2,p.position.z),new THREE.Vector3(0,-1,0));
+     const hit=ray.current.intersectObject(floor,false)[0];
+     if(hit)floorY=hit.point.y;
+   }
+   const targetY=floorY+.45;
+   if(p.position.y<=targetY+.08&&vertical.current<=0){
+     p.position.y=targetY;vertical.current=0;grounded.current=true;
+   }else{
+     grounded.current=false;
+     vertical.current-=18*d;
+     p.position.y+=vertical.current*d;
+     if(p.position.y<=targetY){p.position.y=targetY;vertical.current=0;grounded.current=true;}
+   }
+   if(grounded.current&&!lastGrounded.current)walk.current+=.15;
+   lastGrounded.current=grounded.current;
    const moving=velocity.current.lengthSq()>.015,swing=moving?Math.sin(walk.current)*.72:0,idle=Math.sin(performance.now()/520)*.025;
-   if(la.current)la.current.rotation.x=swing;if(ra.current)ra.current.rotation.x=-swing;if(ll.current)ll.current.rotation.x=-swing;if(rl.current)rl.current.rotation.x=swing;
-   if(torso.current){torso.current.rotation.z=THREE.MathUtils.lerp(torso.current.rotation.z,moving?Math.sin(walk.current*2)*.035:0,1-Math.exp(-8*d));torso.current.position.y=1.08+idle;}
+   if(la.current)la.current.rotation.x=grounded.current?swing:0;
+   if(ra.current)ra.current.rotation.x=grounded.current?-swing:0;
+   if(ll.current)ll.current.rotation.x=grounded.current?-swing:0;
+   if(rl.current)rl.current.rotation.x=grounded.current?swing:0;
+   if(torso.current){
+     torso.current.rotation.z=THREE.MathUtils.lerp(torso.current.rotation.z,moving&&grounded.current?Math.sin(walk.current*2)*.035:0,1-Math.exp(-8*d));
+     torso.current.position.y=1.08+(grounded.current?idle:0);
+   }
+   wasMoving.current=moving;
  });
  return <group ref={g} position={[...G(9.055,7.49),.45]}>
    <mesh castShadow position={[0,1.72,0]}><sphereGeometry args={[.34,20,16]}/><meshStandardMaterial color="#7b4b32"/></mesh>
@@ -153,7 +184,7 @@ function Building({a}:{a:typeof places[number]}){const[,x,z,w,h,d]=a;
 }
 
 function Scene({move,cameraYaw=0,cameraPitch=.48,jump=0,onPositionChange,onNearbyChange}:{move?:Props["move"];cameraYaw?:number;cameraPitch?:number;jump?:number;onPositionChange?:Props["onPositionChange"];onNearbyChange?:Props["onNearbyChange"]}){
- const pr=useRef<THREE.Group|null>(null),{camera}=useThree(),last=useRef<string|null>(null),lookTarget=useRef(new THREE.Vector3());
+ const pr=useRef<THREE.Group|null>(null),ground=useRef<THREE.Mesh|null>(null),{camera}=useThree(),last=useRef<string|null>(null),lookTarget=useRef(new THREE.Vector3());
  useFrame((_,d)=>{
    const p=pr.current;if(!p)return;
    const dist=8.2,off=new THREE.Vector3(Math.sin(cameraYaw)*dist,3.2+cameraPitch*3.8,Math.cos(cameraYaw)*dist);
@@ -166,14 +197,14 @@ function Scene({move,cameraYaw=0,cameraPitch=.48,jump=0,onPositionChange,onNearb
  });
  return <>
    <ambientLight intensity={1.15}/><directionalLight position={[8,14,6]} intensity={2.6} castShadow/>
-   <mesh rotation={[-Math.PI/2,0,0]} receiveShadow><planeGeometry args={[12000,12000]}/><meshStandardMaterial color="#68705f"/></mesh>
+   <mesh ref={ground} rotation={[-Math.PI/2,0,0]} receiveShadow><planeGeometry args={[12000,12000]}/><meshStandardMaterial color="#68705f"/></mesh>
    <RoadNetwork/><CityStreets/><UrbanBuildings/>
    {districtBounds.map(b=><DistrictBoundary key={b.name} {...b}/>)}
    <DistrictSign name="CENTRAL AREA" position={[...G(9.055,7.49),.1]}/>
    <DistrictSign name="WUSE" position={[...G(9.081,7.476),.1]}/>
    <DistrictSign name="GARKI" position={[...G(9.029,7.483),.1]}/>
    {places.map(a=>a[0].includes("National")||a[0]==="Eagle Square"||a[0]==="Abuja City Gate"||a[0]==="Wuse Market"?<Landmark key={a[0]} a={a}/>:<Building key={a[0]} a={a}/>)} 
-   <Player move={move} cameraYaw={cameraYaw} jump={jump} onPositionChange={onPositionChange} playerRef={pr}/>
+   <Player move={move} cameraYaw={cameraYaw} jump={jump} onPositionChange={onPositionChange} playerRef={pr} groundRef={ground}/>
  </>
 }
 
