@@ -15,7 +15,7 @@ type Props={
 const places=[
  ["CBD Office",-8,-9,7,6,6],["Wuse Shop",8,-10,6,5,6],
  ["Garki Shop",-9,9,6,4.4,6],["Jabi Apartment",9,10,7,6,5],
- ["Street Kiosk",-13,-1,4,3.4,5]
+ ["STREET KIOSK",-13,-4.5,3.2,3.0,2.8]
 ] as const;
 
 type Collider={x:number;z:number,w:number,d:number};
@@ -98,6 +98,10 @@ function Building({a}:{a:typeof places[number]}){
    <mesh castShadow receiveShadow><boxGeometry args={[w,h,d]}/><meshStandardMaterial color="#9a8f80"/></mesh>
    <mesh position={[0,-h/2+1,d/2+.03]}><boxGeometry args={[1.2,1.4,.08]}/><meshStandardMaterial color="#4c2c1e"/></mesh>
    <mesh position={[0,0,d/2+.04]}><boxGeometry args={[2,.9,.06]}/><meshStandardMaterial color="#4e9bc7"/></mesh>
+   {a[0]==="STREET KIOSK"&&<group position={[0,0,d/2+.08]}>
+     <mesh position={[0,.95,0]}><boxGeometry args={[2.55,.48,.08]}/><meshStandardMaterial color="#18231d"/></mesh>
+     <mesh position={[0,.95,.05]}><boxGeometry args={[2.35,.25,.03]}/><meshStandardMaterial color="#d8f36b"/></mesh>
+   </group>}
  </group>
 }
 
