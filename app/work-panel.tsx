@@ -34,8 +34,15 @@ export default function WorkPanel({ jobs, state, onComplete, formatNaira }: Prop
     setWorking(job.id);
     setError("");
 
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) {
+      setError("Your game session expired. Please reload the game.");
+      setWorking(null);
+      return;
+    }
     const { data, error: invokeError } = await supabase.functions.invoke("perform-job", {
       body: { job_id: job.id },
+      headers: { Authorization: "Bearer " + session.access_token },
     });
 
     if (invokeError || data?.error) {
