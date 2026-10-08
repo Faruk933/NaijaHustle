@@ -15,7 +15,7 @@ type Props={
 const places=[
  ["CBD Office",-8,-9,7,6,6],["Wuse Shop",8,-10,6,5,6],
  ["Garki Shop",-9,9,6,4.4,6],["Jabi Apartment",9,10,7,6,5],
- ["STREET KIOSK",-13,-4.5,3.2,3.0,2.8]
+ ["STREET KIOSK",-6.0,-6.0,3.0,3.0,2.4]
 ] as const;
 
 type Collider={x:number;z:number,w:number,d:number};
