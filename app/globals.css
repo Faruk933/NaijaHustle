@@ -247,3 +247,12 @@ button, a { font: inherit; }
 .nearby-action{position:absolute;z-index:4;top:112px;left:50%;transform:translateX(-50%);border:1px solid #ffffff55;border-radius:999px;padding:10px 15px;background:#101510ee;color:var(--accent);font-size:11px;font-weight:900;letter-spacing:.04em}
 
 .camera-zone{position:absolute;inset:0;z-index:1;touch-action:none}.camera-zone .world-canvas{z-index:0}.hud,.hud-stats,.nearby-action,.touch-controls,.modal,.toast{z-index:3}.touch-controls{pointer-events:none}.joystick,.action-buttons{position:relative;z-index:4}
+
+/* Mobile controls */
+.touch-controls{pointer-events:none;touch-action:none}
+.joystick,.camera-pad,.action-buttons{pointer-events:auto}
+.joystick{touch-action:none;user-select:none}
+.joystick-knob{transition:transform .04s linear}
+.camera-pad{position:absolute;right:24px;bottom:32px;width:92px;height:92px;border:1px solid #ffffff33;border-radius:50%;background:#101510aa;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;touch-action:none;user-select:none;z-index:5}
+.camera-pad span{font-size:25px;line-height:1}.camera-pad small{font-size:8px;font-weight:800;opacity:.7;margin-top:3px}
+@media (max-width:520px){.camera-pad{right:18px;bottom:26px;width:82px;height:82px}.action-buttons{right:112px!important}}
